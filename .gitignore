@@ -1,0 +1,11 @@
+node_modules/
+.wwebjs_auth/
+*.sqlite
+*.sqlite-journal
+uploads/
+gs_car_ref/
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store

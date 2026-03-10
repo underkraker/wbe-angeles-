@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Clean Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --dc-cyan: #10c7c8; --dc-blue: #0b1f4d; --dc-coral: #ff6b6b; }
+        body { font-family: 'Sora', sans-serif; background: radial-gradient(circle at top, #12306b 0%, #0b1f4d 50%, #081737 100%); color: #fff; }
+        .panel { background: linear-gradient(165deg, rgba(18,38,79,.96) 0%, rgba(14,29,62,.96) 100%); border: 1px solid rgba(16, 199, 200, 0.35); border-radius: 1rem; padding: 1.2rem; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+        input, select, textarea { background: #0f1c3a !important; border: 1px solid #2d4e8a !important; color: white !important; border-radius: 0.75rem; padding: 0.7rem; width: 100%; }
+        .btn-main { background: linear-gradient(120deg, var(--dc-cyan), var(--dc-coral)); color: #fff; font-weight: 700; border-radius: 0.7rem; padding: 0.65rem 1rem; box-shadow: 0 8px 18px rgba(255, 107, 107, 0.25); transition: transform .15s ease, filter .15s ease; }
+        .btn-main:hover { transform: translateY(-1px); filter: brightness(1.04); }
+        .section-title { letter-spacing: .04em; text-transform: uppercase; font-weight: 800; color: #d6f9ff; }
+        .table-soft thead th { color: #b8eefa; font-weight: 700; }
+        .table-soft tbody tr { transition: background-color .15s ease; }
+        .table-soft tbody tr:hover { background: rgba(16, 199, 200, 0.06); }
+        .glass-top { background: linear-gradient(160deg, rgba(18,52,112,.5), rgba(11,31,77,.25)); border: 1px solid rgba(16, 199, 200, 0.28); }
+        .chip { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .7rem; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: rgba(16, 199, 200, 0.16); color: #bff8ff; border: 1px solid rgba(16, 199, 200, 0.35); }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 rgba(16,199,200,0); }
+            50% { box-shadow: 0 0 18px rgba(16,199,200,.18); }
+        }
+        .anim-in { animation: fadeUp .45s ease both; }
+        .anim-in-1 { animation-delay: .05s; }
+        .anim-in-2 { animation-delay: .1s; }
+        .anim-in-3 { animation-delay: .15s; }
+        .anim-in-4 { animation-delay: .2s; }
+        .anim-in-5 { animation-delay: .25s; }
+        .anim-in-6 { animation-delay: .3s; }
+        #waStatus { animation: pulseGlow 2.6s ease-in-out infinite; border-radius: .8rem; padding: .55rem .65rem; background: rgba(16,199,200,.07); border: 1px solid rgba(16,199,200,.2); }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <div id="loginScreen" class="max-w-sm mx-auto mt-20 text-center panel anim-in">
+        <h1 class="text-xl font-black uppercase mb-6">Dream Clean Admin</h1>
+        <input type="password" id="passInput" placeholder="Contraseña" class="mb-4">
+        <button onclick="checkAccess()" class="btn-main w-full">Entrar</button>
+    </div>
+
+    <div id="adminContent" class="max-w-7xl mx-auto hidden space-y-6">
+        <header class="flex justify-between items-center panel glass-top anim-in anim-in-1">
+            <div>
+                <h1 class="text-2xl font-black uppercase">Panel de Control</h1>
+                <p class="text-sm" style="color:#b6d9ff">Gestion completa de Dream Clean</p>
+            </div>
+            <span class="chip">Admin activo</span>
+            <div class="flex gap-2">
+                <a href="index.html" class="btn-main">Ver sitio</a>
+                <button onclick="logoutAdmin()" class="btn-main">Salir</button>
+            </div>
+        </header>
+
+        <section class="grid lg:grid-cols-2 gap-6 anim-in anim-in-2">
+            <div class="panel space-y-3">
+                <h2 class="text-lg section-title">Configuración</h2>
+                <input type="text" id="conf_personal" placeholder="Telefono personal (admin)">
+                <input type="text" id="conf_local" placeholder="Telefono negocio (WhatsApp)">
+                <button onclick="guardarConfig()" class="btn-main">Actualizar numeros</button>
+            </div>
+            <div class="panel">
+                <h2 class="text-lg section-title mb-3">Estado WhatsApp</h2>
+                <div id="waStatus" class="text-sm" style="color:#bfefff">Cargando...</div>
+            </div>
+        </section>
+
+        <section class="panel anim-in anim-in-3">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg section-title">Paquetes</h2>
+                <button onclick="abrirModalNuevoPaquete()" class="btn-main">Nuevo paquete</button>
+            </div>
+            <p class="text-xs mb-3" style="color:#9fd8f5">Tip: usa Precio 1 y Precio 2 para variantes (ej. sedan/camioneta, individual/matrimonial, etc.).</p>
+            <div class="overflow-auto">
+                <table class="w-full text-sm table-soft">
+                    <thead>
+                        <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
+                            <th class="py-2">Nombre</th><th>Precio 1</th><th>Precio 2</th><th>Incluye</th><th>Tipo</th><th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaPaquetes"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel anim-in anim-in-4">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg section-title">Promociones</h2>
+                <button onclick="abrirModalNuevaPromo()" class="btn-main">Nueva promoción</button>
+            </div>
+            <div class="overflow-auto">
+                <table class="w-full text-sm table-soft">
+                    <thead>
+                        <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
+                            <th class="py-2">Título</th><th>Descripción</th><th>Beneficio</th><th>Código</th><th>Estado</th><th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaPromos"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel anim-in anim-in-5">
+            <h2 class="text-lg section-title mb-3">Citas</h2>
+            <div class="overflow-auto">
+                <table class="w-full text-sm table-soft">
+                    <thead>
+                        <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
+                            <th class="py-2">Cliente</th><th>WhatsApp</th><th>Auto/Mueble</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCitas"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel grid md:grid-cols-2 gap-4 anim-in anim-in-6">
+            <div class="panel" style="background:rgba(10,25,55,.35)">
+                <p class="text-sm mb-2">Logo actual</p>
+                <img id="previewLogoActual" src="Gemini_Generated_Image_1ul01j1ul01j1ul0.png" class="w-24 h-24 rounded-full object-cover mb-3" alt="Logo">
+                <input type="file" id="logoFile" accept="image/*" class="mb-2">
+                <button onclick="subirLogo()" class="btn-main">Subir logo</button>
+            </div>
+            <div class="panel" style="background:rgba(10,25,55,.35)">
+                <p class="text-sm mb-2">Imagen de galería</p>
+                <select id="gallerySlot" class="mb-2">
+                    <option value="1">Slot 1</option><option value="2">Slot 2</option><option value="3">Slot 3</option>
+                    <option value="4">Slot 4</option><option value="5">Slot 5</option><option value="6">Slot 6</option>
+                </select>
+                <input type="file" id="galleryFile" accept="image/*" class="mb-2">
+                <button onclick="subirGaleria()" class="btn-main">Subir imagen</button>
+            </div>
+        </section>
+    </div>
+
+    <div id="modalNuevoPaquete" class="hidden fixed inset-0 p-4 items-center justify-center" style="background:rgba(11,31,77,.72)">
+        <div class="panel w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-3">Nuevo paquete</h3>
+            <div class="grid md:grid-cols-2 gap-3">
+                <input type="text" id="nuevo_pkg_nombre" placeholder="Nombre">
+                <input type="number" id="nuevo_pkg_sedan" placeholder="Precio 1">
+                <input type="number" id="nuevo_pkg_camioneta" placeholder="Precio 2">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="nuevo_pkg_promo" style="width:auto"> Promocional</label>
+                <textarea id="nuevo_pkg_incluye" class="md:col-span-2" placeholder="Incluye..."></textarea>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="crearPaquete()" class="btn-main">Guardar</button>
+                <button onclick="cerrarModalNuevoPaquete()" class="btn-main">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditarPaquete" class="hidden fixed inset-0 p-4 items-center justify-center" style="background:rgba(11,31,77,.72)">
+        <div class="panel w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-3">Editar paquete</h3>
+            <input type="hidden" id="edit_pkg_id">
+            <div class="grid md:grid-cols-2 gap-3">
+                <input type="text" id="edit_pkg_nombre" placeholder="Nombre">
+                <input type="number" id="edit_pkg_sedan" placeholder="Precio 1">
+                <input type="number" id="edit_pkg_camioneta" placeholder="Precio 2">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="edit_pkg_promo" style="width:auto"> Promocional</label>
+                <textarea id="edit_pkg_incluye" class="md:col-span-2" placeholder="Incluye..."></textarea>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="aplicarEdicionPaquete()" class="btn-main">Guardar</button>
+                <button onclick="cerrarModalEditarPaquete()" class="btn-main">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalNuevaPromo" class="hidden fixed inset-0 p-4 items-center justify-center" style="background:rgba(11,31,77,.72)">
+        <div class="panel w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-3">Nueva promoción</h3>
+            <div class="grid md:grid-cols-2 gap-3">
+                <input type="text" id="nuevo_promo_titulo" class="md:col-span-2" placeholder="Titulo">
+                <textarea id="nuevo_promo_desc" class="md:col-span-2" placeholder="Descripcion"></textarea>
+                <input type="number" id="nuevo_promo_precio" placeholder="Precio especial">
+                <input type="number" id="nuevo_promo_descuento" placeholder="Descuento %">
+                <input type="text" id="nuevo_promo_codigo" class="md:col-span-2" placeholder="Código">
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="crearPromocion()" class="btn-main">Guardar</button>
+                <button onclick="cerrarModalNuevaPromo()" class="btn-main">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditarPromo" class="hidden fixed inset-0 p-4 items-center justify-center" style="background:rgba(11,31,77,.72)">
+        <div class="panel w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-3">Editar promoción</h3>
+            <input type="hidden" id="edit_promo_id">
+            <div class="grid md:grid-cols-2 gap-3">
+                <input type="text" id="edit_promo_titulo" class="md:col-span-2" placeholder="Titulo">
+                <textarea id="edit_promo_desc" class="md:col-span-2" placeholder="Descripcion"></textarea>
+                <input type="number" id="edit_promo_precio" placeholder="Precio especial">
+                <input type="number" id="edit_promo_descuento" placeholder="Descuento %">
+                <input type="text" id="edit_promo_codigo" placeholder="Código">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="edit_promo_activa" style="width:auto"> Activa</label>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button onclick="aplicarEdicionPromo()" class="btn-main">Guardar</button>
+                <button onclick="cerrarModalEditarPromo()" class="btn-main">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+        const ADMIN_TOKEN_KEY = 'dreamclean.admin.token';
+        let paquetesCache = [];
+        let promocionesCache = [];
+
+        function getAdminToken() {
+            return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
+        }
+
+        function authHeaders() {
+            const token = getAdminToken();
+            return {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            };
+        }
+
+        function escapeHtml(v) {
+            return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function checkAccess() {
+            const pass = document.getElementById('passInput').value;
+            const res = await fetch(`${API_URL}/admin-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pass }) });
+            if (!res.ok) {
+                alert('Contraseña incorrecta');
+                return;
+            }
+            const data = await res.json();
+            if (!data?.token) {
+                alert('No se pudo iniciar sesion');
+                return;
+            }
+            sessionStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+            document.getElementById('passInput').value = '';
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('adminContent').classList.remove('hidden');
+            await cargarConfig();
+            await cargarPaquetes();
+            await cargarPromociones();
+            await cargarCitas();
+            await cargarMediaAdmin();
+            await cargarWhatsApp();
+        }
+
+        async function cargarConfig() {
+            const res = await fetch(`${API_URL}/obtener-config`);
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById('conf_personal').value = data.telefono_personal || '';
+            document.getElementById('conf_local').value = data.telefono_local || '';
+        }
+
+        async function guardarConfig() {
+            const personal = document.getElementById('conf_personal').value;
+            const local = document.getElementById('conf_local').value;
+            const res = await fetch(`${API_URL}/actualizar-config`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ personal, local }) });
+            alert(res.ok ? 'Configuración guardada' : 'No se pudo guardar');
+        }
+
+        async function cargarPaquetes() {
+            const res = await fetch(`${API_URL}/obtener-paquetes`);
+            if (!res.ok) return;
+            paquetesCache = await res.json();
+            const tbody = document.getElementById('tablaPaquetes');
+            tbody.innerHTML = paquetesCache.map((p) => `
+                <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
+                    <td class="py-2">${escapeHtml(p.nombre)}</td>
+                    <td>$${escapeHtml(p.precio_sedan)}</td>
+                    <td>$${escapeHtml(p.precio_camioneta)}</td>
+                    <td>${escapeHtml(p.incluye || '')}</td>
+                    <td>${Number(p.es_promocion) ? 'Promocional' : 'Normal'}</td>
+                    <td class="text-right">
+                        <button onclick="abrirModalEditarPaquete(${p.id})" class="mr-2" style="color:#6ee7f0">Editar</button>
+                        <button onclick="eliminarPaquete(${p.id})" style="color:#ff8a8a">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirModalNuevoPaquete() { document.getElementById('modalNuevoPaquete').classList.replace('hidden', 'flex'); }
+        function cerrarModalNuevoPaquete() { document.getElementById('modalNuevoPaquete').classList.replace('flex', 'hidden'); }
+        async function crearPaquete() {
+            const nombre = document.getElementById('nuevo_pkg_nombre').value.trim();
+            const p_sedan = document.getElementById('nuevo_pkg_sedan').value;
+            const p_camioneta = document.getElementById('nuevo_pkg_camioneta').value;
+            const incluye = document.getElementById('nuevo_pkg_incluye').value.trim();
+            const es_promocion = document.getElementById('nuevo_pkg_promo').checked;
+            const res = await fetch(`${API_URL}/crear-paquete`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ nombre, p_sedan, p_camioneta, incluye, es_promocion }) });
+            if (!res.ok) return alert('No se pudo crear');
+            cerrarModalNuevoPaquete();
+            cargarPaquetes();
+        }
+
+        function abrirModalEditarPaquete(id) {
+            const p = paquetesCache.find((x) => Number(x.id) === Number(id));
+            if (!p) return;
+            document.getElementById('edit_pkg_id').value = p.id;
+            document.getElementById('edit_pkg_nombre').value = p.nombre || '';
+            document.getElementById('edit_pkg_sedan').value = p.precio_sedan || 0;
+            document.getElementById('edit_pkg_camioneta').value = p.precio_camioneta || 0;
+            document.getElementById('edit_pkg_incluye').value = p.incluye || '';
+            document.getElementById('edit_pkg_promo').checked = Number(p.es_promocion) === 1;
+            document.getElementById('modalEditarPaquete').classList.replace('hidden', 'flex');
+        }
+        function cerrarModalEditarPaquete() { document.getElementById('modalEditarPaquete').classList.replace('flex', 'hidden'); }
+        async function aplicarEdicionPaquete() {
+            const id = Number(document.getElementById('edit_pkg_id').value);
+            const nombre = document.getElementById('edit_pkg_nombre').value.trim();
+            const p_sedan = document.getElementById('edit_pkg_sedan').value;
+            const p_camioneta = document.getElementById('edit_pkg_camioneta').value;
+            const incluye = document.getElementById('edit_pkg_incluye').value.trim();
+            const es_promocion = document.getElementById('edit_pkg_promo').checked;
+            const res = await fetch(`${API_URL}/actualizar-paquete`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, nombre, p_sedan, p_camioneta, incluye, es_promocion }) });
+            if (!res.ok) return alert('No se pudo actualizar');
+            cerrarModalEditarPaquete();
+            cargarPaquetes();
+        }
+        async function eliminarPaquete(id) {
+            if (!confirm('Eliminar paquete?')) return;
+            const res = await fetch(`${API_URL}/eliminar-paquete`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
+            if (!res.ok) return alert('No se pudo eliminar');
+            cargarPaquetes();
+        }
+
+        async function cargarPromociones() {
+            const res = await fetch(`${API_URL}/admin-obtener-promociones`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            if (!res.ok) return;
+            promocionesCache = await res.json();
+            document.getElementById('tablaPromos').innerHTML = promocionesCache.map((p) => {
+                const beneficio = p.precio_especial ? `$${p.precio_especial}` : (p.descuento_porcentaje ? `${p.descuento_porcentaje}%` : '-');
+                return `
+                    <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
+                        <td class="py-2">${escapeHtml(p.titulo)}</td>
+                        <td>${escapeHtml(p.descripcion || '')}</td>
+                        <td>${escapeHtml(beneficio)}</td>
+                        <td>${escapeHtml(p.codigo || '-')}</td>
+                        <td>${Number(p.activa) ? 'Activa' : 'Inactiva'}</td>
+                        <td class="text-right">
+                            <button onclick="abrirModalEditarPromo(${p.id})" class="mr-2" style="color:#6ee7f0">Editar</button>
+                            <button onclick="eliminarPromocion(${p.id})" style="color:#ff8a8a">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function abrirModalNuevaPromo() { document.getElementById('modalNuevaPromo').classList.replace('hidden', 'flex'); }
+        function cerrarModalNuevaPromo() { document.getElementById('modalNuevaPromo').classList.replace('flex', 'hidden'); }
+        async function crearPromocion() {
+            const titulo = document.getElementById('nuevo_promo_titulo').value.trim();
+            const descripcion = document.getElementById('nuevo_promo_desc').value.trim();
+            const precio_especial = document.getElementById('nuevo_promo_precio').value;
+            const descuento_porcentaje = document.getElementById('nuevo_promo_descuento').value;
+            const codigo = document.getElementById('nuevo_promo_codigo').value.trim();
+            const res = await fetch(`${API_URL}/crear-promocion`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ titulo, descripcion, precio_especial, descuento_porcentaje, codigo, activa: true }) });
+            if (!res.ok) return alert('No se pudo crear');
+            cerrarModalNuevaPromo();
+            cargarPromociones();
+        }
+
+        function abrirModalEditarPromo(id) {
+            const p = promocionesCache.find((x) => Number(x.id) === Number(id));
+            if (!p) return;
+            document.getElementById('edit_promo_id').value = p.id;
+            document.getElementById('edit_promo_titulo').value = p.titulo || '';
+            document.getElementById('edit_promo_desc').value = p.descripcion || '';
+            document.getElementById('edit_promo_precio').value = p.precio_especial ?? '';
+            document.getElementById('edit_promo_descuento').value = p.descuento_porcentaje ?? '';
+            document.getElementById('edit_promo_codigo').value = p.codigo || '';
+            document.getElementById('edit_promo_activa').checked = Number(p.activa) === 1;
+            document.getElementById('modalEditarPromo').classList.replace('hidden', 'flex');
+        }
+        function cerrarModalEditarPromo() { document.getElementById('modalEditarPromo').classList.replace('flex', 'hidden'); }
+        async function aplicarEdicionPromo() {
+            const id = Number(document.getElementById('edit_promo_id').value);
+            const titulo = document.getElementById('edit_promo_titulo').value.trim();
+            const descripcion = document.getElementById('edit_promo_desc').value.trim();
+            const precio_especial = document.getElementById('edit_promo_precio').value;
+            const descuento_porcentaje = document.getElementById('edit_promo_descuento').value;
+            const codigo = document.getElementById('edit_promo_codigo').value.trim();
+            const activa = document.getElementById('edit_promo_activa').checked;
+            const res = await fetch(`${API_URL}/actualizar-promocion`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, titulo, descripcion, precio_especial, descuento_porcentaje, codigo, activa }) });
+            if (!res.ok) return alert('No se pudo actualizar');
+            cerrarModalEditarPromo();
+            cargarPromociones();
+        }
+        async function eliminarPromocion(id) {
+            if (!confirm('¿Eliminar promoción?')) return;
+            const res = await fetch(`${API_URL}/eliminar-promocion`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
+            if (!res.ok) return alert('No se pudo eliminar');
+            cargarPromociones();
+        }
+
+        async function cargarCitas() {
+            const tbody = document.getElementById('tablaCitas');
+            const res = await fetch(`${API_URL}/obtener-citas`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            if (!res.ok) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-3" style="color:#ff8a8a">No se pudieron cargar</td></tr>';
+                return;
+            }
+            const citas = await res.json();
+            if (!citas.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-3" style="color:#a6c3ec">Sin citas</td></tr>';
+                return;
+            }
+            tbody.innerHTML = citas.map((c) => `
+                <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
+                    <td class="py-2"><input id="ct-n-${c.id}" value="${escapeHtml(c.nombre_cliente || '')}"></td>
+                    <td><input id="ct-t-${c.id}" value="${escapeHtml(c.telefono || '')}"></td>
+                    <td><input id="ct-m-${c.id}" value="${escapeHtml(c.modelo_auto || '')}"></td>
+                    <td><input id="ct-s-${c.id}" value="${escapeHtml(c.servicio || '')}"></td>
+                    <td><input type="date" id="ct-f-${c.id}" value="${escapeHtml(c.fecha_cita || '')}"></td>
+                    <td><input type="time" id="ct-h-${c.id}" value="${escapeHtml(c.hora_cita || '')}"></td>
+                    <td class="text-right">
+                        <button onclick="guardarReagenda(${c.id})" class="mr-2" style="color:#6ee7f0">Guardar</button>
+                        <button onclick="eliminarCita(${c.id})" style="color:#ff8a8a">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        async function guardarReagenda(id) {
+            const nombre = document.getElementById(`ct-n-${id}`).value;
+            const telefono = document.getElementById(`ct-t-${id}`).value;
+            const modelo = document.getElementById(`ct-m-${id}`).value;
+            const servicio = document.getElementById(`ct-s-${id}`).value;
+            const fecha = document.getElementById(`ct-f-${id}`).value;
+            const hora = document.getElementById(`ct-h-${id}`).value;
+            const res = await fetch(`${API_URL}/reagendar-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, nombre, telefono, modelo, servicio, fecha, hora }) });
+            alert(res.ok ? 'Cita actualizada' : 'No se pudo actualizar');
+            if (res.ok) cargarCitas();
+        }
+        async function eliminarCita(id) {
+            if (!confirm('Eliminar cita?')) return;
+            const res = await fetch(`${API_URL}/eliminar-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
+            if (res.ok) cargarCitas();
+        }
+
+        function fileToDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function cargarMediaAdmin() {
+            const res = await fetch(`${API_URL}/obtener-media`);
+            if (!res.ok) return;
+            const media = await res.json();
+            if (media.logo_path) document.getElementById('previewLogoActual').src = media.logo_path;
+        }
+
+        async function subirLogo() {
+            const file = document.getElementById('logoFile').files[0];
+            if (!file) return alert('Selecciona una imagen');
+            const imageData = await fileToDataUrl(file);
+            const res = await fetch(`${API_URL}/subir-logo`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ imageData }) });
+            alert(res.ok ? 'Logo actualizado' : 'No se pudo subir');
+            if (res.ok) cargarMediaAdmin();
+        }
+
+        async function subirGaleria() {
+            const file = document.getElementById('galleryFile').files[0];
+            if (!file) return alert('Selecciona una imagen');
+            const slot = document.getElementById('gallerySlot').value;
+            const imageData = await fileToDataUrl(file);
+            const res = await fetch(`${API_URL}/subir-galeria`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ slot, imageData }) });
+            alert(res.ok ? 'Imagen actualizada' : 'No se pudo subir');
+        }
+
+        let waInterval = null;
+        async function cargarWhatsApp() {
+            await actualizarEstadoWA();
+            if (waInterval) clearInterval(waInterval);
+            waInterval = setInterval(actualizarEstadoWA, 5000);
+        }
+
+        async function actualizarEstadoWA() {
+            const container = document.getElementById('waStatus');
+            try {
+                const res = await fetch(`${API_URL}/whatsapp-status`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+                const data = await res.json();
+                if (data.connected) {
+                    container.innerHTML = '<p class="mb-2" style="color:#89ffd5">Conectado</p><p class="mb-3 text-xs" style="color:#bfefff">WhatsApp listo para enviar mensajes y recordatorios.</p><div class="flex gap-2"><button onclick="cerrarSesionWA()" class="btn-main">Cerrar sesión</button><button onclick="reiniciarWhatsApp()" class="btn-main">Regenerar QR</button></div>';
+                    return;
+                }
+                if (data.qr) {
+                    container.innerHTML = `<p class="mb-2" style="color:#ffd79a">Escanea este QR en WhatsApp</p><p class="mb-2 text-xs" style="color:#bfefff">${data.status_text || 'QR activo para vincular.'}</p><img src="${data.qr}" class="rounded-xl bg-white p-2" style="width:220px;height:220px;"><div class="mt-3"><button onclick="reiniciarWhatsApp()" class="btn-main">Reintentar QR</button></div>`;
+                    return;
+                }
+                const stateText = data.status_text || 'Generando QR...';
+                const errText = data.last_error ? `<p class="mt-2 text-xs" style="color:#ffb1b1">Detalle: ${data.last_error}</p>` : '';
+                const initText = data.initializing ? 'Generando QR...' : stateText;
+                container.innerHTML = `<p style="color:#a6c3ec">${initText}</p>${errText}<div class="mt-3"><button onclick="reiniciarWhatsApp()" class="btn-main">Reintentar ahora</button></div>`;
+            } catch (e) {
+                container.innerHTML = '<p style="color:#ff8a8a">Error consultando WhatsApp</p><div class="mt-3"><button onclick="reiniciarWhatsApp()" class="btn-main">Reintentar ahora</button></div>';
+            }
+        }
+
+        async function reiniciarWhatsApp() {
+            const res = await fetch(`${API_URL}/whatsapp-restart`, { method: 'POST', headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            alert(res.ok ? 'Reinicio iniciado, espera unos segundos.' : 'No se pudo reiniciar WhatsApp.');
+            actualizarEstadoWA();
+        }
+
+        async function cerrarSesionWA() {
+            if (!confirm('¿Cerrar sesión de WhatsApp?')) return;
+            const res = await fetch(`${API_URL}/whatsapp-logout`, { method: 'POST', headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            if (res.ok) alert('Sesion cerrada');
+        }
+
+        async function logoutAdmin() {
+            try {
+                await fetch(`${API_URL}/admin-logout`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${getAdminToken()}` }
+                });
+            } catch (error) {
+                // noop
+            }
+            sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+            location.reload();
+        }
+
+        async function tryAutoLogin() {
+            const token = getAdminToken();
+            if (!token) return;
+
+            try {
+                const res = await fetch(`${API_URL}/obtener-citas`, { headers: { Authorization: `Bearer ${token}` } });
+                if (!res.ok) {
+                    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+                    return;
+                }
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('adminContent').classList.remove('hidden');
+                await cargarConfig();
+                await cargarPaquetes();
+                await cargarPromociones();
+                await cargarCitas();
+                await cargarMediaAdmin();
+                await cargarWhatsApp();
+            } catch (error) {
+                sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+            }
+        }
+
+        void tryAutoLogin();
+    </script>
+</body>
+</html>

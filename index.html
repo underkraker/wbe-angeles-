@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Clean | Limpieza premium para autos y muebles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --dc-cyan: #10c7c8; --dc-blue: #0b1f4d; --dc-coral: #ff6b6b; --dc-white: #f9fcff; --dc-ink: #122a57; --dc-soft: #e8f8fb; }
+        body { font-family: 'Sora', sans-serif; background: var(--dc-white); scroll-behavior: smooth; }
+        .dc-card { background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(10px); border: 1px solid rgba(11, 31, 77, 0.12); border-radius: 1.5rem; transition: all 0.25s ease; }
+        .dc-card:hover { transform: translateY(-6px); box-shadow: 0 14px 26px rgba(16, 199, 200, 0.18); }
+        .pkg-card { position: relative; overflow: hidden; border: 1px solid rgba(16, 199, 200, 0.35); box-shadow: 0 12px 24px rgba(11, 31, 77, 0.10); }
+        .pkg-card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: linear-gradient(120deg, var(--dc-cyan), var(--dc-coral)); }
+        .pkg-price { border: 1px solid rgba(16, 199, 200, 0.28); background: linear-gradient(120deg, #f1feff, #edf3ff); }
+        .pkg-cta { background: linear-gradient(120deg, var(--dc-coral), #ff8f6b); box-shadow: 0 10px 20px rgba(255, 107, 107, 0.28); }
+        .pkg-cta:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+    <nav class="fixed w-full z-50 p-4">
+        <div class="max-w-6xl mx-auto bg-white/90 backdrop-blur-md rounded-full px-6 py-3 flex items-center shadow-lg" style="border:1px solid rgba(16,199,200,.35)">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full overflow-hidden" style="border:1px solid rgba(255,107,107,.7)">
+                    <img id="logo-nav" src="Gemini_Generated_Image_1ul01j1ul01j1ul0.png" alt="Logo" class="h-full w-full object-cover">
+                </div>
+                <span class="text-xl tracking-wide font-extrabold uppercase" style="color:var(--dc-blue)">Dream Clean</span>
+            </div>
+        </div>
+    </nav>
+
+    <header class="pt-32 pb-16 px-6 text-white relative overflow-hidden" style="background: radial-gradient(circle at right, #10c7c8 0%, #0b1f4d 58%, #081737 100%);">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">Limpieza profesional con acabado <span style="color: var(--dc-coral);">premium</span>.</h1>
+                <p class="text-lg mb-8" style="color:#dff7ff">Servicio profesional para autos y muebles con agenda rápida, seguimiento por WhatsApp y promociones activas cada semana.</p>
+                <a href="#servicios" class="px-10 py-4 rounded-2xl text-white font-black uppercase inline-block shadow-xl" style="background: linear-gradient(120deg, var(--dc-cyan), var(--dc-coral));">Ver Servicios</a>
+            </div>
+            <div class="flex justify-center">
+                <img id="logo-hero" src="Gemini_Generated_Image_1ul01j1ul01j1ul0.png" alt="Dream Clean" class="w-full max-w-md rounded-full aspect-square object-cover shadow-2xl">
+            </div>
+        </div>
+    </header>
+
+    <section id="servicios" class="py-20 px-6" style="background: linear-gradient(180deg, #ecfbfd 0%, #f7faff 100%);">
+        <div class="max-w-6xl mx-auto text-center" style="color:var(--dc-blue)">
+            <h2 class="text-4xl font-black mb-14 uppercase">Paquetes</h2>
+            <p class="max-w-3xl mx-auto -mt-8 mb-10 text-sm md:text-base" style="color:#35558f">Elige el paquete ideal para tu auto o mueble y agenda en segundos. Resultados visibles desde la primera limpieza.</p>
+            <div id="contenedor-paquetes" class="grid md:grid-cols-3 gap-8 text-left"></div>
+            <div id="paquetes-extra" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 text-left mt-8"></div>
+        </div>
+    </section>
+
+    <section id="promociones" class="py-20 px-6" style="background:linear-gradient(180deg,#ffffff 0%,#f1fbff 100%)">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-black mb-3 uppercase text-center" style="color:var(--dc-blue)">Promociones</h2>
+            <p class="text-center mb-10" style="color:#35558f">Ofertas disponibles esta semana para que ahorres y mantengas todo impecable.</p>
+            <div id="lista-promociones" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+    </section>
+
+    <div id="bookingModal" class="fixed inset-0 z-[100] backdrop-blur-sm items-center justify-center p-4" style="background:rgba(11,31,77,.62); display:none; opacity:0; transition:opacity .25s ease;">
+        <div class="bg-white w-full max-w-md rounded-[2rem] p-8 relative shadow-2xl text-left" style="color:var(--dc-blue)">
+            <button onclick="closeModal()" class="absolute top-5 right-5 text-2xl font-bold" style="color:#4c6da7">&times;</button>
+            <h2 class="text-2xl font-black mb-6 uppercase">Agenda tu cita</h2>
+            <form id="reservaForm" class="space-y-4">
+                <input type="text" id="nombre" placeholder="Nombre completo" required class="w-full p-4 rounded-2xl outline-none" style="background:var(--dc-soft)">
+                <input type="tel" id="tel_cliente" placeholder="WhatsApp (ej: 5512345678)" required class="w-full p-4 rounded-2xl outline-none" style="background:var(--dc-soft)">
+                <input type="text" id="modelo" placeholder="Auto o mueble" required class="w-full p-4 rounded-2xl outline-none" style="background:var(--dc-soft)">
+                <select id="servicio" class="w-full p-4 rounded-2xl outline-none" style="background:var(--dc-soft)"></select>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="date" id="fecha" required class="p-4 rounded-2xl outline-none" style="background:var(--dc-soft)">
+                    <input type="time" id="hora" required class="p-4 rounded-2xl outline-none" style="background:var(--dc-soft)">
+                </div>
+                <div id="mensajeError" class="text-red-600 text-xs font-bold hidden bg-red-50 p-4 rounded-xl"></div>
+                <button type="button" onclick="validarYEnviar()" class="w-full py-4 rounded-2xl font-black uppercase text-white" style="background: linear-gradient(120deg, var(--dc-cyan), var(--dc-coral));">Confirmar por WhatsApp</button>
+            </form>
+        </div>
+    </div>
+
+    <section id="galeria" class="py-20 px-6" style="background:linear-gradient(180deg,#e8f8fb 0%,#dff4ff 100%)">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-black mb-10 uppercase text-center" style="color:var(--dc-blue)">Galería</h2>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <img id="galeria-1" class="rounded-2xl h-60 w-full object-cover" alt="Trabajo 1">
+                <img id="galeria-2" class="rounded-2xl h-60 w-full object-cover" alt="Trabajo 2">
+                <img id="galeria-3" class="rounded-2xl h-60 w-full object-cover" alt="Trabajo 3">
+                <img id="galeria-4" class="rounded-2xl h-60 w-full object-cover" alt="Trabajo 4">
+                <img id="galeria-5" class="rounded-2xl h-60 w-full object-cover" alt="Trabajo 5">
+                <img id="galeria-6" class="rounded-2xl h-60 w-full object-cover" alt="Trabajo 6">
+            </div>
+        </div>
+    </section>
+
+    <section id="comentarios" class="py-20 px-6" style="background:#fff">
+        <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
+            <div>
+                <h2 class="text-3xl font-black mb-4 uppercase" style="color:var(--dc-blue)">Comentarios</h2>
+                <form id="comentarioForm" class="space-y-4">
+                    <input type="text" id="comentarioNombre" placeholder="Tu nombre" required class="w-full p-4 rounded-2xl border outline-none" style="background:var(--dc-soft); border-color:rgba(16,199,200,.35)">
+                    <textarea id="comentarioTexto" placeholder="Escribe tu comentario..." required class="w-full p-4 rounded-2xl border outline-none min-h-[140px]" style="background:var(--dc-soft); border-color:rgba(16,199,200,.35)"></textarea>
+                    <button type="submit" class="px-8 py-3 rounded-xl font-bold text-white" style="background:linear-gradient(120deg,var(--dc-blue),#18439d);">Publicar</button>
+                </form>
+                <div id="comentarioMensaje" class="mt-4 text-sm font-bold hidden"></div>
+            </div>
+            <div>
+                <h3 class="text-2xl font-black mb-4 uppercase" style="color:var(--dc-blue)">Lo que dicen nuestros clientes</h3>
+                <div id="listaComentarios" class="space-y-4"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="ubicacion" class="py-16 px-6" style="background:linear-gradient(180deg,#f3fbff 0%,#e9f7ff 100%)">
+        <div class="max-w-6xl mx-auto dc-card p-8 md:p-10">
+            <p class="text-xs font-black uppercase tracking-widest mb-2" style="color:var(--dc-coral)">Ubicacion</p>
+            <h2 class="text-3xl md:text-4xl font-black mb-3" style="color:var(--dc-blue)">Visitanos en Hermosillo</h2>
+            <p class="text-lg mb-5" style="color:#2c4c80">Retorno de Provincia Malaga 102, Hermosillo, Sonora.</p>
+            <a
+                href="https://www.google.com/maps/search/?api=1&query=Retorno+de+Provincia+Malaga+102,+Hermosillo,+Sonora"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-block px-8 py-3 rounded-xl text-white font-black uppercase pkg-cta"
+            >
+                Ver en Google Maps
+            </a>
+            <div class="mt-6 overflow-hidden rounded-2xl" style="border:1px solid rgba(16,199,200,.35)">
+                <iframe
+                    title="Mapa Dream Clean"
+                    src="https://www.google.com/maps?q=Retorno+de+Provincia+Malaga+102,+Hermosillo,+Sonora&output=embed"
+                    width="100%"
+                    height="340"
+                    style="border:0; display:block"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const API_URL = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+        const modal = document.getElementById('bookingModal');
+        const errorDiv = document.getElementById('mensajeError');
+
+        window.onload = async () => {
+            await cargarPaquetes();
+            initComentariosForm();
+            cargarComentarios();
+            await cargarMediaVisual();
+            await cargarPromocionesPublicas();
+        };
+
+        function escapeHtml(v) {
+            return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function cargarPaquetes() {
+            try {
+                const res = await fetch(`${API_URL}/obtener-paquetes`);
+                if (!res.ok) throw new Error('No se pudieron cargar los paquetes');
+                const data = await res.json();
+                const cont = document.getElementById('contenedor-paquetes');
+                const extra = document.getElementById('paquetes-extra');
+                const select = document.getElementById('servicio');
+                select.innerHTML = data.map((p) => `<option value="${escapeHtml(p.nombre)}">${escapeHtml(p.nombre)}</option>`).join('');
+
+                cont.innerHTML = data.slice(0, 3).map((p) => `
+                    <div class="dc-card pkg-card p-6 flex flex-col">
+                        ${Number(p.es_promocion) ? '<p class="text-xs font-black uppercase tracking-widest mb-3" style="color:var(--dc-coral)">Destacado</p>' : ''}
+                        <h3 class="text-2xl font-bold mb-2 uppercase" style="color:var(--dc-blue)">${escapeHtml(p.nombre)}</h3>
+                        <div class="space-y-2 mb-5">
+                            <div class="flex justify-between p-3 rounded-xl pkg-price"><span>Precio 1</span><span class="font-black" style="color:var(--dc-blue)">$${escapeHtml(p.precio_sedan)}</span></div>
+                            <div class="flex justify-between p-3 rounded-xl pkg-price"><span>Precio 2</span><span class="font-black" style="color:var(--dc-blue)">$${escapeHtml(p.precio_camioneta)}</span></div>
+                        </div>
+                        <p class="text-sm mb-5" style="color:#305083">${escapeHtml(p.incluye || 'Consulta detalles por WhatsApp')}</p>
+                        <button onclick="openModal('${String(p.nombre || '').replace(/'/g, "\\'")}')" class="mt-auto w-full py-3 rounded-xl text-white font-bold pkg-cta">Reservar ahora</button>
+                    </div>
+                `).join('');
+
+                extra.innerHTML = data.slice(3).map((p) => `
+                    <div class="dc-card pkg-card p-6 flex flex-col">
+                        ${Number(p.es_promocion) ? '<p class="text-xs font-black uppercase tracking-widest mb-3" style="color:var(--dc-coral)">Destacado</p>' : ''}
+                        <h3 class="text-2xl font-bold mb-2 uppercase" style="color:var(--dc-blue)">${escapeHtml(p.nombre)}</h3>
+                        <div class="space-y-2 mb-5">
+                            <div class="flex justify-between p-3 rounded-xl pkg-price"><span>Precio 1</span><span class="font-black" style="color:var(--dc-blue)">$${escapeHtml(p.precio_sedan)}</span></div>
+                            <div class="flex justify-between p-3 rounded-xl pkg-price"><span>Precio 2</span><span class="font-black" style="color:var(--dc-blue)">$${escapeHtml(p.precio_camioneta)}</span></div>
+                        </div>
+                        <p class="text-sm mb-5" style="color:#305083">${escapeHtml(p.incluye || 'Consulta detalles por WhatsApp')}</p>
+                        <button onclick="openModal('${String(p.nombre || '').replace(/'/g, "\\'")}')" class="mt-auto w-full py-3 rounded-xl text-white font-bold pkg-cta">Reservar ahora</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                mostrarError('No se pudieron cargar los paquetes. Inténtalo de nuevo.');
+            }
+        }
+
+        async function cargarPromocionesPublicas() {
+            const cont = document.getElementById('lista-promociones');
+            try {
+                const res = await fetch(`${API_URL}/obtener-promociones`);
+                if (!res.ok) throw new Error('No se pudieron cargar las promociones');
+                const promos = await res.json();
+                if (!Array.isArray(promos) || promos.length === 0) {
+                    cont.innerHTML = '<div class="dc-card p-5 text-sm md:col-span-2 lg:col-span-3" style="color:#305083">Por ahora no hay promociones activas.</div>';
+                    return;
+                }
+
+                cont.innerHTML = promos.map((p) => {
+                    const precio = p.precio_especial ? `$${p.precio_especial}` : null;
+                    const descuento = p.descuento_porcentaje ? `${p.descuento_porcentaje}% de descuento` : null;
+                    const beneficio = precio || descuento || 'Consulta en WhatsApp';
+                    const codigo = p.codigo ? `Código: ${escapeHtml(p.codigo)}` : 'Sin código';
+                    return `
+                        <div class="dc-card p-6">
+                            <p class="text-xs font-black uppercase tracking-widest mb-2" style="color:#2f5694">Promoción activa</p>
+                            <h3 class="text-xl font-black mb-2" style="color:var(--dc-blue)">${escapeHtml(p.titulo)}</h3>
+                            <p class="text-sm mb-4" style="color:#305083">${escapeHtml(p.descripcion || '')}</p>
+                            <div class="rounded-xl p-3 mb-3 font-black text-white" style="background:linear-gradient(120deg, var(--dc-blue), #122f77); border:1px solid rgba(255,107,107,0.55);">${beneficio}</div>
+                            <p class="text-xs uppercase tracking-wide" style="color:#4a6ba2">${codigo}</p>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                cont.innerHTML = '<div class="dc-card p-5 text-sm text-red-600 md:col-span-2 lg:col-span-3">No se pudieron cargar las promociones.</div>';
+            }
+        }
+
+        async function cargarMediaVisual() {
+            try {
+                const res = await fetch(`${API_URL}/obtener-media`);
+                if (!res.ok) return;
+                const media = await res.json();
+                if (media.logo_path) {
+                    document.getElementById('logo-nav').src = media.logo_path;
+                    document.getElementById('logo-hero').src = media.logo_path;
+                }
+                for (let i = 1; i <= 6; i += 1) {
+                    const img = document.getElementById(`galeria-${i}`);
+                    const key = `gallery_${i}`;
+                    if (img && media[key]) img.src = media[key];
+                }
+            } catch (e) {}
+        }
+
+        function openModal(paquete) {
+            document.getElementById('servicio').value = paquete;
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => { modal.style.opacity = '1'; });
+        }
+
+        function closeModal() {
+            modal.style.opacity = '0';
+            setTimeout(() => { modal.style.display = 'none'; }, 200);
+        }
+
+        async function validarYEnviar() {
+            const nombre = document.getElementById('nombre').value;
+            const tel = document.getElementById('tel_cliente').value;
+            const modelo = document.getElementById('modelo').value;
+            const servicio = document.getElementById('servicio').value;
+            const fechaVal = document.getElementById('fecha').value;
+            const horaVal = document.getElementById('hora').value;
+
+            if (!nombre || !tel || !modelo || !fechaVal || !horaVal) {
+                mostrarError('Completa todos los campos.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/registrar-cita`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre,
+                        modelo,
+                        servicio,
+                        fecha: fechaVal,
+                        hora: horaVal,
+                        telefono: tel.startsWith('52') ? tel : `52${tel}`
+                    })
+                });
+
+                if (!res.ok) {
+                    mostrarError('Error al registrar la cita.');
+                    return;
+                }
+
+                const data = await res.json();
+                const numLocal = data.telefono_local || '5215512345678';
+                window.open(`https://wa.me/${numLocal}?text=Hola Dream Clean, quiero agendar: ${nombre}, ${modelo}, ${servicio}, ${fechaVal} ${horaVal}`, '_blank');
+                closeModal();
+            } catch (e) {
+                mostrarError('Error de conexión al agendar.');
+            }
+        }
+
+        async function cargarComentarios() {
+            const lista = document.getElementById('listaComentarios');
+            try {
+                const res = await fetch(`${API_URL}/obtener-comentarios`);
+                if (!res.ok) throw new Error();
+                const comentarios = await res.json();
+                if (!comentarios.length) {
+                    lista.innerHTML = '<div class="dc-card p-5 text-sm" style="color:#305083">Aún no hay comentarios.</div>';
+                    return;
+                }
+                lista.innerHTML = comentarios.map((c) => `
+                    <div class="dc-card p-5">
+                        <p class="font-black" style="color:var(--dc-blue)">${escapeHtml(c.nombre || 'Cliente')}</p>
+                        <p class="mt-2" style="color:#2c4c80">${escapeHtml(c.comentario || '')}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                lista.innerHTML = '<div class="dc-card p-5 text-sm text-red-600">No se pudieron cargar comentarios.</div>';
+            }
+        }
+
+        function initComentariosForm() {
+            const form = document.getElementById('comentarioForm');
+            form.addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                const nombre = document.getElementById('comentarioNombre').value.trim();
+                const comentario = document.getElementById('comentarioTexto').value.trim();
+                const msg = document.getElementById('comentarioMensaje');
+
+                if (!nombre || !comentario) {
+                    msg.classList.remove('hidden');
+                    msg.className = 'mt-4 text-sm font-bold text-red-600';
+                    msg.innerText = 'Completa nombre y comentario.';
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/agregar-comentario`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, comentario })
+                    });
+                    if (!res.ok) throw new Error();
+                    form.reset();
+                    msg.classList.remove('hidden');
+                    msg.className = 'mt-4 text-sm font-bold text-green-700';
+                    msg.innerText = 'Comentario publicado correctamente.';
+                    cargarComentarios();
+                } catch (e) {
+                    msg.classList.remove('hidden');
+                    msg.className = 'mt-4 text-sm font-bold text-red-600';
+                    msg.innerText = 'No se pudo publicar el comentario.';
+                }
+            });
+        }
+
+        function mostrarError(m) {
+            errorDiv.innerText = m;
+            errorDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
