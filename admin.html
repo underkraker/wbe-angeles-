@@ -111,12 +111,25 @@
         </section>
 
         <section class="panel anim-in anim-in-5">
-            <h2 class="text-lg section-title mb-3">Citas</h2>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <h2 class="text-lg section-title">Citas</h2>
+                <div class="flex flex-wrap gap-2">
+                    <input type="text" id="filtroCitasTexto" placeholder="Buscar nombre o telefono" oninput="aplicarFiltrosCitas()" style="min-width:230px">
+                    <select id="filtroCitasEstado" onchange="aplicarFiltrosCitas()" style="min-width:170px">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                    <button onclick="limpiarFiltrosCitas()" class="btn-main">Limpiar filtros</button>
+                </div>
+            </div>
             <div class="overflow-auto">
                 <table class="w-full text-sm table-soft">
                     <thead>
                         <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
-                            <th class="py-2">Nombre</th><th>Telefono</th><th>Modelo</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th class="text-right">Acciones</th>
+                            <th class="py-2">Nombre</th><th>Telefono</th><th>Modelo</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th>Estado</th><th class="text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCitas"></tbody>
@@ -233,6 +246,7 @@
         const ADMIN_TOKEN_KEY = 'dreamclean.admin.token';
         let paquetesCache = [];
         let promocionesCache = [];
+        let citasCache = [];
 
         function getAdminToken() {
             return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
@@ -455,12 +469,18 @@
             if (!tbody) return;
             const res = await fetch(`${API_URL}/obtener-citas`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
             if (!res.ok) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-3" style="color:#ff8a8a">No se pudieron cargar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="py-3" style="color:#ff8a8a">No se pudieron cargar</td></tr>';
                 return;
             }
-            const citas = await res.json();
+            citasCache = await res.json();
+            renderCitas(citasCache);
+        }
+
+        function renderCitas(citas) {
+            const tbody = document.getElementById('tablaCitas');
+            if (!tbody) return;
             if (!citas.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-3" style="color:#a6c3ec">Sin citas</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="py-3" style="color:#a6c3ec">Sin citas</td></tr>';
                 return;
             }
             tbody.innerHTML = citas.map((c) => `
@@ -471,13 +491,44 @@
                     <td><input id="ct-s-${c.id}" value="${escapeHtml(c.servicio || '')}"></td>
                     <td><input type="date" id="ct-f-${c.id}" value="${escapeHtml(c.fecha_cita || '')}"></td>
                     <td><input type="time" id="ct-h-${c.id}" value="${escapeHtml(c.hora_cita || '')}"></td>
+                    <td>
+                        <select id="ct-e-${c.id}" style="min-width:120px">
+                            <option value="pendiente" ${String(c.estado_cita || 'pendiente') === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="confirmada" ${String(c.estado_cita || '') === 'confirmada' ? 'selected' : ''}>Confirmada</option>
+                            <option value="completada" ${String(c.estado_cita || '') === 'completada' ? 'selected' : ''}>Completada</option>
+                            <option value="cancelada" ${String(c.estado_cita || '') === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+                        </select>
+                    </td>
                     <td class="text-right">
                         <button onclick="guardarReagenda(${c.id})" class="mr-2" style="color:#6ee7f0">Guardar</button>
+                        <button onclick="actualizarEstadoCita(${c.id})" class="mr-2" style="color:#89ffd5">Estado</button>
                         <button onclick="eliminarCita(${c.id})" style="color:#ff8a8a">Eliminar</button>
                     </td>
                 </tr>
             `).join('');
         }
+
+        function aplicarFiltrosCitas() {
+            const texto = String(document.getElementById('filtroCitasTexto')?.value || '').toLowerCase().trim();
+            const estado = String(document.getElementById('filtroCitasEstado')?.value || '').toLowerCase().trim();
+            const filtradas = citasCache.filter((c) => {
+                const nombre = String(c.nombre_cliente || '').toLowerCase();
+                const telefono = String(c.telefono || '').toLowerCase();
+                const okTexto = !texto || nombre.includes(texto) || telefono.includes(texto);
+                const okEstado = !estado || String(c.estado_cita || 'pendiente').toLowerCase() === estado;
+                return okTexto && okEstado;
+            });
+            renderCitas(filtradas);
+        }
+
+        function limpiarFiltrosCitas() {
+            const txt = document.getElementById('filtroCitasTexto');
+            const est = document.getElementById('filtroCitasEstado');
+            if (txt) txt.value = '';
+            if (est) est.value = '';
+            renderCitas(citasCache);
+        }
+
         async function guardarReagenda(id) {
             const nombre = document.getElementById(`ct-n-${id}`).value;
             const telefono = document.getElementById(`ct-t-${id}`).value;
@@ -487,6 +538,12 @@
             const hora = document.getElementById(`ct-h-${id}`).value;
             const res = await fetch(`${API_URL}/reagendar-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, nombre, telefono, modelo, servicio, fecha, hora }) });
             alert(res.ok ? 'Cita actualizada' : 'No se pudo actualizar');
+            if (res.ok) cargarCitas();
+        }
+        async function actualizarEstadoCita(id) {
+            const estado = document.getElementById(`ct-e-${id}`).value;
+            const res = await fetch(`${API_URL}/actualizar-estado-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, estado }) });
+            alert(res.ok ? 'Estado actualizado' : 'No se pudo actualizar estado');
             if (res.ok) cargarCitas();
         }
         async function eliminarCita(id) {

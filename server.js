@@ -270,7 +270,12 @@ const db = new sqlite3.Database('./dream_clean.sqlite', (err) => {
         ensureConfigColumn('social_facebook', "TEXT DEFAULT ''");
         ensureConfigColumn('social_tiktok', "TEXT DEFAULT ''");
         ensureConfigColumn('social_whatsapp', "TEXT DEFAULT ''");
-        db.run('CREATE TABLE IF NOT EXISTS citas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre_cliente TEXT, telefono TEXT, modelo_auto TEXT, servicio TEXT, fecha_cita TEXT, hora_cita TEXT, recordatorio_24h INTEGER DEFAULT 0, recordatorio_1h INTEGER DEFAULT 0)');
+        db.run("CREATE TABLE IF NOT EXISTS citas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre_cliente TEXT, telefono TEXT, modelo_auto TEXT, servicio TEXT, fecha_cita TEXT, hora_cita TEXT, estado_cita TEXT DEFAULT 'pendiente', recordatorio_24h INTEGER DEFAULT 0, recordatorio_1h INTEGER DEFAULT 0)");
+        db.run("ALTER TABLE citas ADD COLUMN estado_cita TEXT DEFAULT 'pendiente'", (err) => {
+            if (err && !String(err.message || '').includes('duplicate column name')) {
+                console.error('No se pudo crear columna estado_cita en citas:', err.message);
+            }
+        });
         db.run(`CREATE TABLE IF NOT EXISTS comentarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT,
@@ -772,6 +777,22 @@ app.post('/reagendar-cita', checkAuth, (req, res) => {
             res.sendStatus(200);
         }
     );
+});
+
+app.post('/actualizar-estado-cita', checkAuth, (req, res) => {
+    const { id, estado } = req.body;
+    const estadoNormalizado = String(estado || '').trim().toLowerCase();
+    const estadosPermitidos = new Set(['pendiente', 'confirmada', 'completada', 'cancelada']);
+
+    if (!estadosPermitidos.has(estadoNormalizado)) {
+        return res.status(400).json({ error: 'Estado invalido' });
+    }
+
+    db.run('UPDATE citas SET estado_cita = ? WHERE id = ?', [estadoNormalizado, id], function onDone(err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (this.changes === 0) return res.status(404).json({ error: 'Cita no encontrada' });
+        res.sendStatus(200);
+    });
 });
 
 app.get('/obtener-config', (_req, res) => {
