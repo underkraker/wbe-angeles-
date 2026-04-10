@@ -14,6 +14,11 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+const backupsDir = path.join(__dirname, 'backups');
+if (!fs.existsSync(backupsDir)) {
+    fs.mkdirSync(backupsDir, { recursive: true });
+}
+
 const WA_CLIENT_ID = process.env.WA_CLIENT_ID || `dream-clean-${process.env.PORT || 3000}`;
 const waSessionDir = path.join(__dirname, '.wwebjs_auth', `session-${WA_CLIENT_ID}`);
 
@@ -285,6 +290,12 @@ const db = new sqlite3.Database('./dream_clean.sqlite', (err) => {
         ensureConfigColumn('faq_4_q', "TEXT DEFAULT ''");
         ensureConfigColumn('faq_4_a', "TEXT DEFAULT ''");
         ensureConfigColumn('cta_phone', "TEXT DEFAULT ''");
+        ensureConfigColumn('wa_tpl_new_customer', "TEXT DEFAULT ''");
+        ensureConfigColumn('wa_tpl_new_admin', "TEXT DEFAULT ''");
+        ensureConfigColumn('wa_tpl_reminder_24h_customer', "TEXT DEFAULT ''");
+        ensureConfigColumn('wa_tpl_reminder_24h_admin', "TEXT DEFAULT ''");
+        ensureConfigColumn('wa_tpl_reminder_1h_customer', "TEXT DEFAULT ''");
+        ensureConfigColumn('wa_tpl_reminder_1h_admin', "TEXT DEFAULT ''");
         db.run("CREATE TABLE IF NOT EXISTS citas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre_cliente TEXT, telefono TEXT, modelo_auto TEXT, servicio TEXT, fecha_cita TEXT, hora_cita TEXT, estado_cita TEXT DEFAULT 'pendiente', recordatorio_24h INTEGER DEFAULT 0, recordatorio_1h INTEGER DEFAULT 0)");
         db.run("ALTER TABLE citas ADD COLUMN estado_cita TEXT DEFAULT 'pendiente'", (err) => {
             if (err && !String(err.message || '').includes('duplicate column name')) {
@@ -546,6 +557,55 @@ const saveBase64Image = (dataUrl, prefix) => {
     return `uploads/${fileName}`;
 };
 
+const DEFAULT_WA_TEMPLATES = {
+    wa_tpl_new_customer: 'Hola {nombre}, tu cita con Dream Clean fue registrada para {fecha} a las {hora}. Servicio: {servicio}.',
+    wa_tpl_new_admin: 'NUEVA CITA AGENDADA\nCliente: {nombre}\nTelefono: {telefono}\nTipo/Modelo: {modelo}\nServicio: {servicio}\nFecha: {fecha}\nHora: {hora}',
+    wa_tpl_reminder_24h_customer: 'Hola {nombre}, Dream Clean te recuerda tu cita de mañana ({fecha}) a las {hora}.',
+    wa_tpl_reminder_24h_admin: 'CITA MANANA: {nombre} - {hora} ({fecha})',
+    wa_tpl_reminder_1h_customer: 'Hola {nombre}, tu cita en Dream Clean comienza en 1 hora ({hora}).',
+    wa_tpl_reminder_1h_admin: 'EN 1 HORA: {nombre} - {hora}'
+};
+
+const renderTemplate = (template, values) => {
+    const base = String(template || '').trim();
+    return base.replace(/\{([a-z_]+)\}/gi, (_, key) => String(values[key] ?? ''));
+};
+
+const getTemplateValue = (config, key) => String(config?.[key] || '').trim() || DEFAULT_WA_TEMPLATES[key];
+
+const sanitizeBackupName = (name) => {
+    const clean = String(name || '').trim();
+    if (!/^[a-zA-Z0-9._-]+$/.test(clean)) return null;
+    if (!clean.endsWith('.sqlite')) return null;
+    return clean;
+};
+
+const createDatabaseBackup = () => {
+    const sourcePath = path.join(__dirname, 'dream_clean.sqlite');
+    if (!fs.existsSync(sourcePath)) return null;
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `dream_clean_${stamp}.sqlite`;
+    const destPath = path.join(backupsDir, fileName);
+    fs.copyFileSync(sourcePath, destPath);
+    return fileName;
+};
+
+const listBackups = () =>
+    fs
+        .readdirSync(backupsDir, { withFileTypes: true })
+        .filter((entry) => entry.isFile() && entry.name.endsWith('.sqlite'))
+        .map((entry) => {
+            const fullPath = path.join(backupsDir, entry.name);
+            const stat = fs.statSync(fullPath);
+            return {
+                name: entry.name,
+                size: stat.size,
+                modified_at: stat.mtime.toISOString()
+            };
+        })
+        .sort((a, b) => new Date(b.modified_at).getTime() - new Date(a.modified_at).getTime())
+        .slice(0, 40);
+
 const checkAuth = (req, res, next) => {
     const bearerToken = getBearerToken(req);
     if (isSessionValid(bearerToken)) {
@@ -568,13 +628,24 @@ cron.schedule('0 * * * *', () => {
         if (err || !config) return;
         const miNum = config.telefono_personal;
 
-        db.all("SELECT * FROM citas WHERE fecha_cita = date('now', '+1 day', 'localtime') AND recordatorio_24h = 0", (selErr, results) => {
+        db.all("SELECT * FROM citas WHERE fecha_cita = date('now', '+1 day', 'localtime') AND recordatorio_24h = 0 AND lower(coalesce(estado_cita,'pendiente')) IN ('pendiente','confirmada')", (selErr, results) => {
             if (selErr) return;
             results?.forEach(async (cita) => {
                 try {
-                    const msg = `Hola ${cita.nombre_cliente}, Dream Clean te recuerda tu cita de mañana a las ${cita.hora_cita}.`;
-                    await client.sendMessage(`${cita.telefono}@c.us`, msg);
-                    await client.sendMessage(`${miNum}@c.us`, `CITA MAÑANA: ${cita.nombre_cliente} - ${cita.hora_cita}`);
+                    const templateValues = {
+                        nombre: cita.nombre_cliente,
+                        telefono: cita.telefono,
+                        modelo: cita.modelo_auto,
+                        servicio: cita.servicio,
+                        fecha: cita.fecha_cita,
+                        hora: cita.hora_cita
+                    };
+                    const msgCustomer = renderTemplate(getTemplateValue(config, 'wa_tpl_reminder_24h_customer'), templateValues);
+                    await client.sendMessage(`${cita.telefono}@c.us`, msgCustomer);
+                    if (miNum) {
+                        const msgAdmin = renderTemplate(getTemplateValue(config, 'wa_tpl_reminder_24h_admin'), templateValues);
+                        await client.sendMessage(`${miNum}@c.us`, msgAdmin);
+                    }
                     db.run('UPDATE citas SET recordatorio_24h = 1 WHERE id = ?', [cita.id]);
                 } catch (sendErr) {
                     console.error('Error recordatorio 24h', sendErr.message);
@@ -582,13 +653,24 @@ cron.schedule('0 * * * *', () => {
             });
         });
 
-        db.all("SELECT * FROM citas WHERE fecha_cita = date('now', 'localtime') AND substr(hora_cita, 1, 2) = strftime('%H', 'now', '+1 hour', 'localtime') AND recordatorio_1h = 0", (selErr, results) => {
+        db.all("SELECT * FROM citas WHERE fecha_cita = date('now', 'localtime') AND substr(hora_cita, 1, 2) = strftime('%H', 'now', '+1 hour', 'localtime') AND recordatorio_1h = 0 AND lower(coalesce(estado_cita,'pendiente')) IN ('pendiente','confirmada')", (selErr, results) => {
             if (selErr) return;
             results?.forEach(async (cita) => {
                 try {
-                    const msg = 'Hola, tu cita en Dream Clean comienza en 1 hora.';
-                    await client.sendMessage(`${cita.telefono}@c.us`, msg);
-                    await client.sendMessage(`${miNum}@c.us`, `EN 1 HORA: ${cita.nombre_cliente}`);
+                    const templateValues = {
+                        nombre: cita.nombre_cliente,
+                        telefono: cita.telefono,
+                        modelo: cita.modelo_auto,
+                        servicio: cita.servicio,
+                        fecha: cita.fecha_cita,
+                        hora: cita.hora_cita
+                    };
+                    const msgCustomer = renderTemplate(getTemplateValue(config, 'wa_tpl_reminder_1h_customer'), templateValues);
+                    await client.sendMessage(`${cita.telefono}@c.us`, msgCustomer);
+                    if (miNum) {
+                        const msgAdmin = renderTemplate(getTemplateValue(config, 'wa_tpl_reminder_1h_admin'), templateValues);
+                        await client.sendMessage(`${miNum}@c.us`, msgAdmin);
+                    }
                     db.run('UPDATE citas SET recordatorio_1h = 1 WHERE id = ?', [cita.id]);
                 } catch (sendErr) {
                     console.error('Error recordatorio 1h', sendErr.message);
@@ -596,6 +678,14 @@ cron.schedule('0 * * * *', () => {
             });
         });
     });
+});
+
+cron.schedule('0 3 * * *', () => {
+    try {
+        createDatabaseBackup();
+    } catch (err) {
+        console.error('Error creando backup diario:', err.message);
+    }
 });
 
 app.post('/admin-login', (req, res) => {
@@ -739,25 +829,30 @@ app.post('/registrar-cita', (req, res) => {
         (err) => {
             if (err) return res.status(500).json({ error: 'Database error' });
 
-            db.get('SELECT telefono_local, telefono_personal FROM configuracion WHERE id = 1', (confErr, conf) => {
+            db.get('SELECT * FROM configuracion WHERE id = 1', (confErr, conf) => {
                 const telefonoLocal = !confErr && conf?.telefono_local ? conf.telefono_local : '5215512345678';
                 const telefonoPersonal = !confErr && conf?.telefono_personal ? conf.telefono_personal : null;
 
                 res.json({ success: true, telefono_local: telefonoLocal });
 
-                if (!telefonoPersonal || !whatsappReady) return;
+                if (!whatsappReady) return;
 
-                const mensajeAdmin = [
-                    'NUEVA CITA AGENDADA',
-                    `Cliente: ${nombre}`,
-                    `Telefono: ${telefono}`,
-                    `Tipo/Modelo: ${modelo}`,
-                    `Servicio: ${servicio}`,
-                    `Fecha: ${fecha}`,
-                    `Hora: ${hora}`
-                ].join('\n');
+                const templateValues = {
+                    nombre,
+                    telefono,
+                    modelo,
+                    servicio,
+                    fecha,
+                    hora
+                };
 
-                client.sendMessage(`${telefonoPersonal}@c.us`, mensajeAdmin).catch(() => {});
+                const msgCustomer = renderTemplate(getTemplateValue(conf, 'wa_tpl_new_customer'), templateValues);
+                client.sendMessage(`${telefono}@c.us`, msgCustomer).catch(() => {});
+
+                if (telefonoPersonal) {
+                    const msgAdmin = renderTemplate(getTemplateValue(conf, 'wa_tpl_new_admin'), templateValues);
+                    client.sendMessage(`${telefonoPersonal}@c.us`, msgAdmin).catch(() => {});
+                }
             });
         }
     );
@@ -767,6 +862,44 @@ app.get('/obtener-citas', checkAuth, (_req, res) => {
     db.all('SELECT * FROM citas ORDER BY fecha_cita ASC, hora_cita ASC, id ASC', (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json(rows);
+    });
+});
+
+app.get('/admin-dashboard', checkAuth, (_req, res) => {
+    db.serialize(() => {
+        const data = {
+            citas_hoy: 0,
+            pendientes: 0,
+            confirmadas: 0,
+            completadas: 0,
+            canceladas: 0,
+            promos_activas: 0,
+            paquetes_total: 0,
+            whatsapp_conectado: whatsappReady
+        };
+
+        db.get("SELECT COUNT(*) AS c FROM citas WHERE fecha_cita = date('now', 'localtime')", (err, row) => {
+            if (!err) data.citas_hoy = row?.c || 0;
+            db.get("SELECT COUNT(*) AS c FROM citas WHERE lower(coalesce(estado_cita,'pendiente')) = 'pendiente'", (err2, row2) => {
+                if (!err2) data.pendientes = row2?.c || 0;
+                db.get("SELECT COUNT(*) AS c FROM citas WHERE lower(coalesce(estado_cita,'')) = 'confirmada'", (err3, row3) => {
+                    if (!err3) data.confirmadas = row3?.c || 0;
+                    db.get("SELECT COUNT(*) AS c FROM citas WHERE lower(coalesce(estado_cita,'')) = 'completada'", (err4, row4) => {
+                        if (!err4) data.completadas = row4?.c || 0;
+                        db.get("SELECT COUNT(*) AS c FROM citas WHERE lower(coalesce(estado_cita,'')) = 'cancelada'", (err5, row5) => {
+                            if (!err5) data.canceladas = row5?.c || 0;
+                            db.get('SELECT COUNT(*) AS c FROM promociones WHERE activa = 1', (err6, row6) => {
+                                if (!err6) data.promos_activas = row6?.c || 0;
+                                db.get('SELECT COUNT(*) AS c FROM servicios', (err7, row7) => {
+                                    if (!err7) data.paquetes_total = row7?.c || 0;
+                                    res.json(data);
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 });
 
@@ -860,6 +993,23 @@ app.post('/crear-paquete', checkAuth, (req, res) => {
     );
 });
 
+app.post('/duplicar-paquete', checkAuth, (req, res) => {
+    const { id } = req.body;
+    db.get('SELECT * FROM servicios WHERE id = ?', [id], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!row) return res.status(404).json({ error: 'Paquete no encontrado' });
+        const nuevoNombre = `${row.nombre} (Copia)`;
+        db.run(
+            'INSERT INTO servicios (nombre, precio_sedan, precio_camioneta, incluye, es_promocion) VALUES (?, ?, ?, ?, ?)',
+            [nuevoNombre, row.precio_sedan, row.precio_camioneta, row.incluye || '', Number(row.es_promocion) ? 1 : 0],
+            function onDone(insertErr) {
+                if (insertErr) return res.status(500).json({ error: 'Database error' });
+                res.json({ success: true, id: this.lastID });
+            }
+        );
+    });
+});
+
 app.post('/eliminar-paquete', checkAuth, (req, res) => {
     const { id } = req.body;
     db.run('DELETE FROM servicios WHERE id = ?', [id], function onDone(err) {
@@ -935,6 +1085,55 @@ app.post('/eliminar-promocion', checkAuth, (req, res) => {
     });
 });
 
+app.post('/duplicar-promocion', checkAuth, (req, res) => {
+    const { id } = req.body;
+    db.get('SELECT * FROM promociones WHERE id = ?', [id], (err, row) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (!row) return res.status(404).json({ error: 'Promocion no encontrada' });
+        const nuevoTitulo = `${row.titulo} (Copia)`;
+        db.run(
+            `INSERT INTO promociones (titulo, descripcion, precio_especial, descuento_porcentaje, codigo, activa)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [nuevoTitulo, row.descripcion || '', row.precio_especial, row.descuento_porcentaje, row.codigo || '', Number(row.activa) ? 1 : 0],
+            function onDone(insertErr) {
+                if (insertErr) return res.status(500).json({ error: 'Database error' });
+                res.json({ success: true, id: this.lastID });
+            }
+        );
+    });
+});
+
+app.post('/admin-backup-now', checkAuth, (_req, res) => {
+    try {
+        const fileName = createDatabaseBackup();
+        if (!fileName) return res.status(500).json({ error: 'No se pudo crear backup' });
+        res.json({ success: true, file: fileName });
+    } catch (err) {
+        res.status(500).json({ error: 'No se pudo crear backup' });
+    }
+});
+
+app.get('/admin-backups', checkAuth, (_req, res) => {
+    try {
+        res.json(listBackups());
+    } catch (err) {
+        res.status(500).json({ error: 'No se pudo listar backups' });
+    }
+});
+
+app.get('/admin-backup-download/:name', (req, res) => {
+    const bearerToken = getBearerToken(req);
+    const queryToken = String(req.query.token || '').trim();
+    const allowed = isSessionValid(bearerToken) || isSessionValid(queryToken) || req.headers['x-admin-password'] === ADMIN_PASSWORD;
+    if (!allowed) return res.status(401).json({ error: 'No autorizado' });
+
+    const safeName = sanitizeBackupName(req.params.name);
+    if (!safeName) return res.status(400).json({ error: 'Archivo invalido' });
+    const filePath = path.join(backupsDir, safeName);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    res.download(filePath, safeName);
+});
+
 app.post('/actualizar-config', checkAuth, (req, res) => {
     const {
         personal,
@@ -957,13 +1156,20 @@ app.post('/actualizar-config', checkAuth, (req, res) => {
         faq_3_a,
         faq_4_q,
         faq_4_a,
-        cta_phone
+        cta_phone,
+        wa_tpl_new_customer,
+        wa_tpl_new_admin,
+        wa_tpl_reminder_24h_customer,
+        wa_tpl_reminder_24h_admin,
+        wa_tpl_reminder_1h_customer,
+        wa_tpl_reminder_1h_admin
     } = req.body;
     db.run(
         `UPDATE configuracion
          SET telefono_personal = ?, telefono_local = ?, social_instagram = ?, social_facebook = ?, social_tiktok = ?, social_whatsapp = ?,
              trust_stat_1_value = ?, trust_stat_1_label = ?, trust_stat_2_value = ?, trust_stat_2_label = ?, trust_stat_3_value = ?, trust_stat_3_label = ?,
-             faq_1_q = ?, faq_1_a = ?, faq_2_q = ?, faq_2_a = ?, faq_3_q = ?, faq_3_a = ?, faq_4_q = ?, faq_4_a = ?, cta_phone = ?
+             faq_1_q = ?, faq_1_a = ?, faq_2_q = ?, faq_2_a = ?, faq_3_q = ?, faq_3_a = ?, faq_4_q = ?, faq_4_a = ?, cta_phone = ?,
+             wa_tpl_new_customer = ?, wa_tpl_new_admin = ?, wa_tpl_reminder_24h_customer = ?, wa_tpl_reminder_24h_admin = ?, wa_tpl_reminder_1h_customer = ?, wa_tpl_reminder_1h_admin = ?
          WHERE id = 1`,
         [
             String(personal || '').trim(),
@@ -986,7 +1192,13 @@ app.post('/actualizar-config', checkAuth, (req, res) => {
             String(faq_3_a || '').trim(),
             String(faq_4_q || '').trim(),
             String(faq_4_a || '').trim(),
-            String(cta_phone || '').trim()
+            String(cta_phone || '').trim(),
+            String(wa_tpl_new_customer || '').trim(),
+            String(wa_tpl_new_admin || '').trim(),
+            String(wa_tpl_reminder_24h_customer || '').trim(),
+            String(wa_tpl_reminder_24h_admin || '').trim(),
+            String(wa_tpl_reminder_1h_customer || '').trim(),
+            String(wa_tpl_reminder_1h_admin || '').trim()
         ],
         (err) => {
         if (err) return res.status(500).json({ error: 'Database error' });

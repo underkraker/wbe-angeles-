@@ -63,6 +63,23 @@
             </div>
         </header>
 
+        <section class="panel anim-in anim-in-1">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2 class="text-lg section-title">Dashboard</h2>
+                <button onclick="cargarDashboard()" class="btn-main">Actualizar</button>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+                <div class="kpi-card"><p id="db-citas-hoy" class="kpi-value">0</p><p class="kpi-label">Citas hoy</p></div>
+                <div class="kpi-card"><p id="db-pendientes" class="kpi-value">0</p><p class="kpi-label">Pendientes</p></div>
+                <div class="kpi-card"><p id="db-confirmadas" class="kpi-value">0</p><p class="kpi-label">Confirmadas</p></div>
+                <div class="kpi-card"><p id="db-completadas" class="kpi-value">0</p><p class="kpi-label">Completadas</p></div>
+                <div class="kpi-card"><p id="db-canceladas" class="kpi-value">0</p><p class="kpi-label">Canceladas</p></div>
+                <div class="kpi-card"><p id="db-promos" class="kpi-value">0</p><p class="kpi-label">Promos activas</p></div>
+                <div class="kpi-card"><p id="db-paquetes" class="kpi-value">0</p><p class="kpi-label">Paquetes</p></div>
+                <div class="kpi-card"><p id="db-wa" class="kpi-value">-</p><p class="kpi-label">WhatsApp</p></div>
+            </div>
+        </section>
+
         <section class="grid lg:grid-cols-2 gap-6 anim-in anim-in-2">
             <div class="panel space-y-3">
                 <h2 class="text-lg section-title">Configuración</h2>
@@ -116,6 +133,40 @@
             </div>
         </section>
 
+        <section class="panel anim-in anim-in-2">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2 class="text-lg section-title">Plantillas WhatsApp</h2>
+                <span class="chip">Automatizacion</span>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs" style="color:#9fd8f5">Nueva cita · cliente</label>
+                    <textarea id="conf_wa_tpl_new_customer" rows="3" placeholder="Hola {nombre}, tu cita..."></textarea>
+                </div>
+                <div>
+                    <label class="text-xs" style="color:#9fd8f5">Nueva cita · admin</label>
+                    <textarea id="conf_wa_tpl_new_admin" rows="3" placeholder="NUEVA CITA..."></textarea>
+                </div>
+                <div>
+                    <label class="text-xs" style="color:#9fd8f5">Recordatorio 24h · cliente</label>
+                    <textarea id="conf_wa_tpl_24h_customer" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs" style="color:#9fd8f5">Recordatorio 24h · admin</label>
+                    <textarea id="conf_wa_tpl_24h_admin" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs" style="color:#9fd8f5">Recordatorio 1h · cliente</label>
+                    <textarea id="conf_wa_tpl_1h_customer" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs" style="color:#9fd8f5">Recordatorio 1h · admin</label>
+                    <textarea id="conf_wa_tpl_1h_admin" rows="3"></textarea>
+                </div>
+            </div>
+            <p class="text-xs mt-2" style="color:#9fd8f5">Variables disponibles: {nombre}, {telefono}, {modelo}, {servicio}, {fecha}, {hora}</p>
+        </section>
+
         <section class="panel anim-in anim-in-3">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-lg section-title">Paquetes</h2>
@@ -138,6 +189,12 @@
                     <option value="normal">Normal</option>
                     <option value="promo">Promocional</option>
                 </select>
+                <select id="sortPaquetes" onchange="aplicarFiltrosPaquetes()" style="min-width:210px">
+                    <option value="nombre_asc">Orden: Nombre A-Z</option>
+                    <option value="nombre_desc">Orden: Nombre Z-A</option>
+                    <option value="sedan_asc">Precio 1 menor</option>
+                    <option value="sedan_desc">Precio 1 mayor</option>
+                </select>
                 <button onclick="limpiarFiltrosPaquetes()" class="btn-main">Limpiar filtros</button>
             </div>
             <div class="overflow-auto">
@@ -151,12 +208,32 @@
                 </table>
                 <div id="cardsPaquetesWrap" class="hidden grid md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
             </div>
+            <div class="flex justify-end items-center gap-2 mt-3">
+                <button onclick="cambiarPaginaPaquetes(-1)" class="btn-main">Anterior</button>
+                <span id="pagPaquetesInfo" class="text-xs" style="color:#9fd8f5">Pagina 1</span>
+                <button onclick="cambiarPaginaPaquetes(1)" class="btn-main">Siguiente</button>
+            </div>
         </section>
 
         <section class="panel anim-in anim-in-4">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-lg section-title">Promociones</h2>
                 <button onclick="abrirModalNuevaPromo()" class="btn-main">Nueva promoción</button>
+            </div>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <input type="text" id="filtroPromosTexto" placeholder="Buscar promocion" oninput="aplicarFiltrosPromos()" style="min-width:230px">
+                <select id="filtroPromosEstado" onchange="aplicarFiltrosPromos()" style="min-width:170px">
+                    <option value="">Todas</option>
+                    <option value="activa">Activas</option>
+                    <option value="inactiva">Inactivas</option>
+                </select>
+                <select id="sortPromos" onchange="aplicarFiltrosPromos()" style="min-width:190px">
+                    <option value="id_desc">Mas recientes</option>
+                    <option value="id_asc">Mas antiguas</option>
+                    <option value="titulo_asc">Titulo A-Z</option>
+                    <option value="titulo_desc">Titulo Z-A</option>
+                </select>
+                <button onclick="limpiarFiltrosPromos()" class="btn-main">Limpiar filtros</button>
             </div>
             <div class="overflow-auto">
                 <table class="w-full text-sm table-soft">
@@ -167,6 +244,11 @@
                     </thead>
                     <tbody id="tablaPromos"></tbody>
                 </table>
+            </div>
+            <div class="flex justify-end items-center gap-2 mt-3">
+                <button onclick="cambiarPaginaPromos(-1)" class="btn-main">Anterior</button>
+                <span id="pagPromosInfo" class="text-xs" style="color:#9fd8f5">Pagina 1</span>
+                <button onclick="cambiarPaginaPromos(1)" class="btn-main">Siguiente</button>
             </div>
         </section>
 
@@ -182,6 +264,12 @@
                         <option value="completada">Completada</option>
                         <option value="cancelada">Cancelada</option>
                     </select>
+                    <select id="sortCitas" onchange="aplicarFiltrosCitas()" style="min-width:200px">
+                        <option value="fecha_asc">Fecha ascendente</option>
+                        <option value="fecha_desc">Fecha descendente</option>
+                        <option value="nombre_asc">Nombre A-Z</option>
+                        <option value="nombre_desc">Nombre Z-A</option>
+                    </select>
                     <button onclick="limpiarFiltrosCitas()" class="btn-main">Limpiar filtros</button>
                 </div>
             </div>
@@ -194,6 +282,11 @@
                     </thead>
                     <tbody id="tablaCitas"></tbody>
                 </table>
+            </div>
+            <div class="flex justify-end items-center gap-2 mt-3">
+                <button onclick="cambiarPaginaCitas(-1)" class="btn-main">Anterior</button>
+                <span id="pagCitasInfo" class="text-xs" style="color:#9fd8f5">Pagina 1</span>
+                <button onclick="cambiarPaginaCitas(1)" class="btn-main">Siguiente</button>
             </div>
         </section>
 
@@ -226,6 +319,24 @@
                 </select>
                 <input type="file" id="galleryFile" accept="image/*" class="mb-2">
                 <button onclick="subirGaleria()" class="btn-main">Subir imagen</button>
+            </div>
+        </section>
+
+        <section class="panel anim-in anim-in-6">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2 class="text-lg section-title">Backups</h2>
+                <button onclick="crearBackupManual()" class="btn-main">Crear backup ahora</button>
+            </div>
+            <div id="backupStatus" class="text-xs mb-3" style="color:#9fd8f5">Sincronizando...</div>
+            <div class="overflow-auto">
+                <table class="w-full text-sm table-soft">
+                    <thead>
+                        <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
+                            <th class="py-2">Archivo</th><th>Tamano</th><th>Fecha</th><th class="text-right">Accion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBackups"></tbody>
+                </table>
             </div>
         </section>
     </div>
@@ -308,6 +419,10 @@
         let promocionesCache = [];
         let citasCache = [];
         let paquetesViewMode = 'tabla';
+        let paquetesPage = 1;
+        let promosPage = 1;
+        let citasPage = 1;
+        const PAGE_SIZE = 8;
 
         function getAdminToken() {
             return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
@@ -345,14 +460,17 @@
         }
 
         async function initAdminData() {
+            setVistaPaquetes(paquetesViewMode);
             const loaders = [
+                cargarDashboard,
                 cargarConfig,
                 cargarPaquetes,
                 cargarPromociones,
                 cargarCitas,
                 cargarComentariosAdmin,
                 cargarMediaAdmin,
-                cargarWhatsApp
+                cargarWhatsApp,
+                cargarBackups
             ];
 
             for (const load of loaders) {
@@ -362,6 +480,20 @@
                     // noop
                 }
             }
+        }
+
+        async function cargarDashboard() {
+            const res = await fetch(`${API_URL}/admin-dashboard`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            if (!res.ok) return;
+            const d = await res.json();
+            document.getElementById('db-citas-hoy').textContent = String(d.citas_hoy || 0);
+            document.getElementById('db-pendientes').textContent = String(d.pendientes || 0);
+            document.getElementById('db-confirmadas').textContent = String(d.confirmadas || 0);
+            document.getElementById('db-completadas').textContent = String(d.completadas || 0);
+            document.getElementById('db-canceladas').textContent = String(d.canceladas || 0);
+            document.getElementById('db-promos').textContent = String(d.promos_activas || 0);
+            document.getElementById('db-paquetes').textContent = String(d.paquetes_total || 0);
+            document.getElementById('db-wa').textContent = d.whatsapp_conectado ? 'Online' : 'Offline';
         }
 
         async function cargarConfig() {
@@ -389,6 +521,12 @@
             document.getElementById('conf_faq_4_q').value = data.faq_4_q || '';
             document.getElementById('conf_faq_4_a').value = data.faq_4_a || '';
             document.getElementById('conf_cta_phone').value = data.cta_phone || '';
+            document.getElementById('conf_wa_tpl_new_customer').value = data.wa_tpl_new_customer || '';
+            document.getElementById('conf_wa_tpl_new_admin').value = data.wa_tpl_new_admin || '';
+            document.getElementById('conf_wa_tpl_24h_customer').value = data.wa_tpl_reminder_24h_customer || '';
+            document.getElementById('conf_wa_tpl_24h_admin').value = data.wa_tpl_reminder_24h_admin || '';
+            document.getElementById('conf_wa_tpl_1h_customer').value = data.wa_tpl_reminder_1h_customer || '';
+            document.getElementById('conf_wa_tpl_1h_admin').value = data.wa_tpl_reminder_1h_admin || '';
         }
 
         async function guardarConfig() {
@@ -413,6 +551,12 @@
             const faq_4_q = document.getElementById('conf_faq_4_q').value;
             const faq_4_a = document.getElementById('conf_faq_4_a').value;
             const cta_phone = document.getElementById('conf_cta_phone').value;
+            const wa_tpl_new_customer = document.getElementById('conf_wa_tpl_new_customer').value;
+            const wa_tpl_new_admin = document.getElementById('conf_wa_tpl_new_admin').value;
+            const wa_tpl_reminder_24h_customer = document.getElementById('conf_wa_tpl_24h_customer').value;
+            const wa_tpl_reminder_24h_admin = document.getElementById('conf_wa_tpl_24h_admin').value;
+            const wa_tpl_reminder_1h_customer = document.getElementById('conf_wa_tpl_1h_customer').value;
+            const wa_tpl_reminder_1h_admin = document.getElementById('conf_wa_tpl_1h_admin').value;
             const res = await fetch(`${API_URL}/actualizar-config`, {
                 method: 'POST',
                 headers: authHeaders(),
@@ -437,7 +581,13 @@
                     faq_3_a,
                     faq_4_q,
                     faq_4_a,
-                    cta_phone
+                    cta_phone,
+                    wa_tpl_new_customer,
+                    wa_tpl_new_admin,
+                    wa_tpl_reminder_24h_customer,
+                    wa_tpl_reminder_24h_admin,
+                    wa_tpl_reminder_1h_customer,
+                    wa_tpl_reminder_1h_admin
                 })
             });
             alert(res.ok ? 'Configuración guardada' : 'No se pudo guardar');
@@ -447,7 +597,7 @@
             const res = await fetch(`${API_URL}/obtener-paquetes`);
             if (!res.ok) return;
             paquetesCache = await res.json();
-            renderPaquetes(paquetesCache);
+            aplicarFiltrosPaquetes();
         }
 
         function updatePackageKPIs(data) {
@@ -469,10 +619,18 @@
             if (!data.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="py-3" style="color:#a6c3ec">Sin paquetes</td></tr>';
                 cards.innerHTML = '<div class="panel" style="background:rgba(10,25,55,.35); color:#a6c3ec">Sin paquetes</div>';
+                const info = document.getElementById('pagPaquetesInfo');
+                if (info) info.textContent = 'Pagina 1 de 1';
                 return;
             }
 
-            tbody.innerHTML = data.map((p) => `
+            const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+            if (paquetesPage > totalPages) paquetesPage = totalPages;
+            if (paquetesPage < 1) paquetesPage = 1;
+            const start = (paquetesPage - 1) * PAGE_SIZE;
+            const pageItems = data.slice(start, start + PAGE_SIZE);
+
+            tbody.innerHTML = pageItems.map((p) => `
                 <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
                     <td class="py-2">${escapeHtml(p.nombre)}</td>
                     <td>$${escapeHtml(p.precio_sedan)}</td>
@@ -481,12 +639,13 @@
                     <td>${Number(p.es_promocion) ? '<span class="pkg-chip pkg-chip-promo">Promocional</span>' : '<span class="pkg-chip pkg-chip-normal">Normal</span>'}</td>
                     <td class="text-right">
                         <button onclick="abrirModalEditarPaquete(${p.id})" class="mr-2" style="color:#6ee7f0">Editar</button>
+                        <button onclick="duplicarPaquete(${p.id})" class="mr-2" style="color:#9de4a8">Duplicar</button>
                         <button onclick="eliminarPaquete(${p.id})" style="color:#ff8a8a">Eliminar</button>
                     </td>
                 </tr>
             `).join('');
 
-            cards.innerHTML = data.map((p) => `
+            cards.innerHTML = pageItems.map((p) => `
                 <article class="panel" style="background:rgba(10,25,55,.35)">
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <h3 class="font-black" style="color:#dffbff">${escapeHtml(p.nombre)}</h3>
@@ -499,15 +658,20 @@
                     </div>
                     <div class="flex justify-end gap-2">
                         <button onclick="abrirModalEditarPaquete(${p.id})" class="btn-main">Editar</button>
+                        <button onclick="duplicarPaquete(${p.id})" class="btn-main" style="background:linear-gradient(120deg,#34d399,#22c55e)">Duplicar</button>
                         <button onclick="eliminarPaquete(${p.id})" class="btn-main" style="background:linear-gradient(120deg,#fb7185,#ff6b6b)">Eliminar</button>
                     </div>
                 </article>
             `).join('');
+
+            const info = document.getElementById('pagPaquetesInfo');
+            if (info) info.textContent = `Pagina ${paquetesPage} de ${totalPages}`;
         }
 
         function aplicarFiltrosPaquetes() {
             const texto = String(document.getElementById('filtroPaquetesTexto')?.value || '').toLowerCase().trim();
             const tipo = String(document.getElementById('filtroPaquetesTipo')?.value || '').toLowerCase().trim();
+            const sort = String(document.getElementById('sortPaquetes')?.value || 'nombre_asc');
 
             const filtrados = paquetesCache.filter((p) => {
                 const nombre = String(p.nombre || '').toLowerCase();
@@ -518,15 +682,30 @@
                 return matchTexto && matchTipo;
             });
 
+            filtrados.sort((a, b) => {
+                if (sort === 'nombre_desc') return String(b.nombre || '').localeCompare(String(a.nombre || ''));
+                if (sort === 'sedan_asc') return Number(a.precio_sedan || 0) - Number(b.precio_sedan || 0);
+                if (sort === 'sedan_desc') return Number(b.precio_sedan || 0) - Number(a.precio_sedan || 0);
+                return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+            });
+
             renderPaquetes(filtrados);
         }
 
         function limpiarFiltrosPaquetes() {
             const txt = document.getElementById('filtroPaquetesTexto');
             const typ = document.getElementById('filtroPaquetesTipo');
+            const sort = document.getElementById('sortPaquetes');
             if (txt) txt.value = '';
             if (typ) typ.value = '';
+            if (sort) sort.value = 'nombre_asc';
+            paquetesPage = 1;
             renderPaquetes(paquetesCache);
+        }
+
+        function cambiarPaginaPaquetes(step) {
+            paquetesPage += Number(step) || 0;
+            aplicarFiltrosPaquetes();
         }
 
         function setVistaPaquetes(mode) {
@@ -544,6 +723,13 @@
             btnCards.style.filter = isCards ? 'none' : 'saturate(.5) brightness(.9)';
         }
 
+        async function duplicarPaquete(id) {
+            const res = await fetch(`${API_URL}/duplicar-paquete`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
+            if (!res.ok) return alert('No se pudo duplicar');
+            cargarPaquetes();
+            cargarDashboard();
+        }
+
         function abrirModalNuevoPaquete() { document.getElementById('modalNuevoPaquete').classList.replace('hidden', 'flex'); }
         function cerrarModalNuevoPaquete() { document.getElementById('modalNuevoPaquete').classList.replace('flex', 'hidden'); }
         async function crearPaquete() {
@@ -556,6 +742,7 @@
             if (!res.ok) return alert('No se pudo crear');
             cerrarModalNuevoPaquete();
             cargarPaquetes();
+            cargarDashboard();
         }
 
         function abrirModalEditarPaquete(id) {
@@ -587,13 +774,24 @@
             const res = await fetch(`${API_URL}/eliminar-paquete`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
             if (!res.ok) return alert('No se pudo eliminar');
             cargarPaquetes();
+            cargarDashboard();
         }
 
         async function cargarPromociones() {
             const res = await fetch(`${API_URL}/admin-obtener-promociones`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
             if (!res.ok) return;
             promocionesCache = await res.json();
-            document.getElementById('tablaPromos').innerHTML = promocionesCache.map((p) => {
+            aplicarFiltrosPromos();
+        }
+
+        function renderPromociones(data) {
+            const totalPages = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+            if (promosPage > totalPages) promosPage = totalPages;
+            if (promosPage < 1) promosPage = 1;
+            const start = (promosPage - 1) * PAGE_SIZE;
+            const pageItems = data.slice(start, start + PAGE_SIZE);
+
+            document.getElementById('tablaPromos').innerHTML = pageItems.map((p) => {
                 const beneficio = p.precio_especial ? `$${p.precio_especial}` : (p.descuento_porcentaje ? `${p.descuento_porcentaje}%` : '-');
                 return `
                     <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
@@ -604,11 +802,54 @@
                         <td>${Number(p.activa) ? 'Activa' : 'Inactiva'}</td>
                         <td class="text-right">
                             <button onclick="abrirModalEditarPromo(${p.id})" class="mr-2" style="color:#6ee7f0">Editar</button>
+                            <button onclick="duplicarPromocion(${p.id})" class="mr-2" style="color:#9de4a8">Duplicar</button>
                             <button onclick="eliminarPromocion(${p.id})" style="color:#ff8a8a">Eliminar</button>
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            const info = document.getElementById('pagPromosInfo');
+            if (info) info.textContent = `Pagina ${promosPage} de ${totalPages}`;
+        }
+
+        function aplicarFiltrosPromos() {
+            const texto = String(document.getElementById('filtroPromosTexto')?.value || '').toLowerCase().trim();
+            const estado = String(document.getElementById('filtroPromosEstado')?.value || '').toLowerCase().trim();
+            const sort = String(document.getElementById('sortPromos')?.value || 'id_desc');
+
+            const filtered = promocionesCache.filter((p) => {
+                const text = `${p.titulo || ''} ${p.descripcion || ''} ${p.codigo || ''}`.toLowerCase();
+                const okText = !texto || text.includes(texto);
+                const isActiva = Number(p.activa) === 1;
+                const okEstado = !estado || (estado === 'activa' ? isActiva : !isActiva);
+                return okText && okEstado;
+            });
+
+            filtered.sort((a, b) => {
+                if (sort === 'id_asc') return Number(a.id) - Number(b.id);
+                if (sort === 'titulo_asc') return String(a.titulo || '').localeCompare(String(b.titulo || ''));
+                if (sort === 'titulo_desc') return String(b.titulo || '').localeCompare(String(a.titulo || ''));
+                return Number(b.id) - Number(a.id);
+            });
+
+            renderPromociones(filtered);
+        }
+
+        function limpiarFiltrosPromos() {
+            const txt = document.getElementById('filtroPromosTexto');
+            const est = document.getElementById('filtroPromosEstado');
+            const sort = document.getElementById('sortPromos');
+            if (txt) txt.value = '';
+            if (est) est.value = '';
+            if (sort) sort.value = 'id_desc';
+            promosPage = 1;
+            renderPromociones(promocionesCache);
+        }
+
+        function cambiarPaginaPromos(step) {
+            promosPage += Number(step) || 0;
+            aplicarFiltrosPromos();
         }
 
         function abrirModalNuevaPromo() { document.getElementById('modalNuevaPromo').classList.replace('hidden', 'flex'); }
@@ -623,6 +864,7 @@
             if (!res.ok) return alert('No se pudo crear');
             cerrarModalNuevaPromo();
             cargarPromociones();
+            cargarDashboard();
         }
 
         function abrirModalEditarPromo(id) {
@@ -656,6 +898,14 @@
             const res = await fetch(`${API_URL}/eliminar-promocion`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
             if (!res.ok) return alert('No se pudo eliminar');
             cargarPromociones();
+            cargarDashboard();
+        }
+
+        async function duplicarPromocion(id) {
+            const res = await fetch(`${API_URL}/duplicar-promocion`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
+            if (!res.ok) return alert('No se pudo duplicar');
+            cargarPromociones();
+            cargarDashboard();
         }
 
         async function cargarCitas() {
@@ -667,7 +917,7 @@
                 return;
             }
             citasCache = await res.json();
-            renderCitas(citasCache);
+            aplicarFiltrosCitas();
         }
 
         function renderCitas(citas) {
@@ -675,9 +925,18 @@
             if (!tbody) return;
             if (!citas.length) {
                 tbody.innerHTML = '<tr><td colspan="8" class="py-3" style="color:#a6c3ec">Sin citas</td></tr>';
+                const info = document.getElementById('pagCitasInfo');
+                if (info) info.textContent = 'Pagina 1 de 1';
                 return;
             }
-            tbody.innerHTML = citas.map((c) => `
+
+            const totalPages = Math.max(1, Math.ceil(citas.length / PAGE_SIZE));
+            if (citasPage > totalPages) citasPage = totalPages;
+            if (citasPage < 1) citasPage = 1;
+            const start = (citasPage - 1) * PAGE_SIZE;
+            const pageItems = citas.slice(start, start + PAGE_SIZE);
+
+            tbody.innerHTML = pageItems.map((c) => `
                 <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
                     <td class="py-2"><input id="ct-n-${c.id}" value="${escapeHtml(c.nombre_cliente || '')}"></td>
                     <td><input id="ct-t-${c.id}" value="${escapeHtml(c.telefono || '')}"></td>
@@ -700,11 +959,15 @@
                     </td>
                 </tr>
             `).join('');
+
+            const info = document.getElementById('pagCitasInfo');
+            if (info) info.textContent = `Pagina ${citasPage} de ${totalPages}`;
         }
 
         function aplicarFiltrosCitas() {
             const texto = String(document.getElementById('filtroCitasTexto')?.value || '').toLowerCase().trim();
             const estado = String(document.getElementById('filtroCitasEstado')?.value || '').toLowerCase().trim();
+            const sort = String(document.getElementById('sortCitas')?.value || 'fecha_asc');
             const filtradas = citasCache.filter((c) => {
                 const nombre = String(c.nombre_cliente || '').toLowerCase();
                 const telefono = String(c.telefono || '').toLowerCase();
@@ -712,15 +975,33 @@
                 const okEstado = !estado || String(c.estado_cita || 'pendiente').toLowerCase() === estado;
                 return okTexto && okEstado;
             });
+
+            filtradas.sort((a, b) => {
+                if (sort === 'nombre_asc') return String(a.nombre_cliente || '').localeCompare(String(b.nombre_cliente || ''));
+                if (sort === 'nombre_desc') return String(b.nombre_cliente || '').localeCompare(String(a.nombre_cliente || ''));
+                const aKey = `${a.fecha_cita || ''} ${a.hora_cita || ''}`;
+                const bKey = `${b.fecha_cita || ''} ${b.hora_cita || ''}`;
+                if (sort === 'fecha_desc') return bKey.localeCompare(aKey);
+                return aKey.localeCompare(bKey);
+            });
+
             renderCitas(filtradas);
         }
 
         function limpiarFiltrosCitas() {
             const txt = document.getElementById('filtroCitasTexto');
             const est = document.getElementById('filtroCitasEstado');
+            const sort = document.getElementById('sortCitas');
             if (txt) txt.value = '';
             if (est) est.value = '';
+            if (sort) sort.value = 'fecha_asc';
+            citasPage = 1;
             renderCitas(citasCache);
+        }
+
+        function cambiarPaginaCitas(step) {
+            citasPage += Number(step) || 0;
+            aplicarFiltrosCitas();
         }
 
         async function guardarReagenda(id) {
@@ -732,18 +1013,27 @@
             const hora = document.getElementById(`ct-h-${id}`).value;
             const res = await fetch(`${API_URL}/reagendar-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, nombre, telefono, modelo, servicio, fecha, hora }) });
             alert(res.ok ? 'Cita actualizada' : 'No se pudo actualizar');
-            if (res.ok) cargarCitas();
+            if (res.ok) {
+                cargarCitas();
+                cargarDashboard();
+            }
         }
         async function actualizarEstadoCita(id) {
             const estado = document.getElementById(`ct-e-${id}`).value;
             const res = await fetch(`${API_URL}/actualizar-estado-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id, estado }) });
             alert(res.ok ? 'Estado actualizado' : 'No se pudo actualizar estado');
-            if (res.ok) cargarCitas();
+            if (res.ok) {
+                cargarCitas();
+                cargarDashboard();
+            }
         }
         async function eliminarCita(id) {
             if (!confirm('Eliminar cita?')) return;
             const res = await fetch(`${API_URL}/eliminar-cita`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
-            if (res.ok) cargarCitas();
+            if (res.ok) {
+                cargarCitas();
+                cargarDashboard();
+            }
         }
 
         async function cargarComentariosAdmin() {
@@ -788,6 +1078,46 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
+        }
+
+        function formatBytes(size) {
+            const n = Number(size || 0);
+            if (n < 1024) return `${n} B`;
+            if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+            return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+        }
+
+        async function cargarBackups() {
+            const tbody = document.getElementById('tablaBackups');
+            const status = document.getElementById('backupStatus');
+            if (!tbody || !status) return;
+            const res = await fetch(`${API_URL}/admin-backups`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            if (!res.ok) {
+                status.textContent = 'No se pudieron cargar backups.';
+                return;
+            }
+            const files = await res.json();
+            status.textContent = `Backups disponibles: ${files.length}. Backup automatico diario a las 03:00.`;
+            if (!files.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-3" style="color:#a6c3ec">Sin backups</td></tr>';
+                return;
+            }
+            tbody.innerHTML = files.map((f) => `
+                <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
+                    <td class="py-2">${escapeHtml(f.name || '')}</td>
+                    <td>${escapeHtml(formatBytes(f.size))}</td>
+                    <td>${escapeHtml(String(f.modified_at || '').slice(0, 19).replace('T', ' '))}</td>
+                    <td class="text-right"><a class="btn-main" href="${API_URL}/admin-backup-download/${encodeURIComponent(f.name)}?token=${encodeURIComponent(getAdminToken())}" target="_blank" rel="noopener">Descargar</a></td>
+                </tr>
+            `).join('');
+        }
+
+        async function crearBackupManual() {
+            const res = await fetch(`${API_URL}/admin-backup-now`, { method: 'POST', headers: { Authorization: `Bearer ${getAdminToken()}` } });
+            if (!res.ok) return alert('No se pudo crear backup');
+            const data = await res.json();
+            alert(`Backup creado: ${data.file}`);
+            cargarBackups();
         }
 
         async function cargarMediaAdmin() {
