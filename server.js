@@ -653,6 +653,16 @@ app.post('/agregar-comentario', (req, res) => {
     });
 });
 
+app.post('/eliminar-comentario', checkAuth, (req, res) => {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ error: 'ID requerido' });
+    db.run('DELETE FROM comentarios WHERE id = ?', [id], function onDone(err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        if (this.changes === 0) return res.status(404).json({ error: 'Comentario no encontrado' });
+        res.sendStatus(200);
+    });
+});
+
 app.post('/subir-logo', checkAuth, (req, res) => {
     const { imageData } = req.body;
     const savedPath = saveBase64Image(imageData, 'logo');

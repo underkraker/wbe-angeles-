@@ -106,15 +106,15 @@
         </section>
 
         <section class="panel anim-in anim-in-5">
-            <h2 class="text-lg section-title mb-3">Citas</h2>
+            <h2 class="text-lg section-title mb-3">Comentarios</h2>
             <div class="overflow-auto">
                 <table class="w-full text-sm table-soft">
                     <thead>
                         <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
-                            <th class="py-2">Cliente</th><th>WhatsApp</th><th>Auto/Mueble</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th class="text-right">Acciones</th>
+                            <th class="py-2">Nombre</th><th>Comentario</th><th>Fecha</th><th class="text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tablaCitas"></tbody>
+                    <tbody id="tablaComentarios"></tbody>
                 </table>
             </div>
         </section>
@@ -251,6 +251,7 @@
             await cargarPaquetes();
             await cargarPromociones();
             await cargarCitas();
+            await cargarComentariosAdmin();
             await cargarMediaAdmin();
             await cargarWhatsApp();
         }
@@ -448,6 +449,41 @@
             if (res.ok) cargarCitas();
         }
 
+        async function cargarComentariosAdmin() {
+            const tbody = document.getElementById('tablaComentarios');
+            const res = await fetch(`${API_URL}/obtener-comentarios`);
+            if (!res.ok) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-3" style="color:#ff8a8a">No se pudieron cargar</td></tr>';
+                return;
+            }
+            const comentarios = await res.json();
+            if (!comentarios.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-3" style="color:#a6c3ec">Sin comentarios</td></tr>';
+                return;
+            }
+            tbody.innerHTML = comentarios.map((c) => `
+                <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
+                    <td class="py-2 font-bold">${escapeHtml(c.nombre || '')}</td>
+                    <td>${escapeHtml(c.comentario || '')}</td>
+                    <td>${escapeHtml(String(c.fecha_creacion || '').slice(0, 16))}</td>
+                    <td class="text-right">
+                        <button onclick="eliminarComentario(${c.id})" style="color:#ff8a8a">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function eliminarComentario(id) {
+            if (!confirm('¿Eliminar comentario permanentemente?')) return;
+            const res = await fetch(`${API_URL}/eliminar-comentario`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }) });
+            if (res.ok) {
+                alert('Comentario eliminado');
+                cargarComentariosAdmin();
+            } else {
+                alert('No se pudo eliminar el comentario');
+            }
+        }
+
         function fileToDataUrl(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -552,6 +588,7 @@
                 await cargarPaquetes();
                 await cargarPromociones();
                 await cargarCitas();
+                await cargarComentariosAdmin();
                 await cargarMediaAdmin();
                 await cargarWhatsApp();
             } catch (error) {
