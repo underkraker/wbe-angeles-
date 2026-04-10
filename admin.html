@@ -19,6 +19,12 @@
         .table-soft tbody tr:hover { background: rgba(16, 199, 200, 0.06); }
         .glass-top { background: linear-gradient(160deg, rgba(18,52,112,.5), rgba(11,31,77,.25)); border: 1px solid rgba(16, 199, 200, 0.28); }
         .chip { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .7rem; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: rgba(16, 199, 200, 0.16); color: #bff8ff; border: 1px solid rgba(16, 199, 200, 0.35); }
+        .pkg-chip { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:.25rem .6rem; font-size:.68rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+        .pkg-chip-promo { background:rgba(255,107,107,.18); color:#ffd2d2; border:1px solid rgba(255,107,107,.45); }
+        .pkg-chip-normal { background:rgba(16,199,200,.16); color:#bff8ff; border:1px solid rgba(16,199,200,.35); }
+        .kpi-card { border:1px solid rgba(16,199,200,.24); border-radius:.8rem; padding:.55rem .7rem; background:rgba(9,24,55,.42); }
+        .kpi-value { font-size:1.05rem; font-weight:800; color:#dffbff; }
+        .kpi-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:#9fd8f5; }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
@@ -113,11 +119,29 @@
         <section class="panel anim-in anim-in-3">
             <div class="flex justify-between items-center mb-3">
                 <h2 class="text-lg section-title">Paquetes</h2>
-                <button onclick="abrirModalNuevoPaquete()" class="btn-main">Nuevo paquete</button>
+                <div class="flex gap-2">
+                    <button onclick="setVistaPaquetes('tabla')" id="btnVistaPaquetesTabla" class="btn-main">Tabla</button>
+                    <button onclick="setVistaPaquetes('cards')" id="btnVistaPaquetesCards" class="btn-main">Cards</button>
+                    <button onclick="abrirModalNuevoPaquete()" class="btn-main">Nuevo paquete</button>
+                </div>
             </div>
             <p class="text-xs mb-3" style="color:#9fd8f5">Tip: usa Precio 1 y Precio 2 para variantes (ej. sedan/camioneta, individual/matrimonial, etc.).</p>
+            <div class="grid md:grid-cols-3 gap-2 mb-3">
+                <div class="kpi-card"><p id="pkgStatTotal" class="kpi-value">0</p><p class="kpi-label">Total</p></div>
+                <div class="kpi-card"><p id="pkgStatNormal" class="kpi-value">0</p><p class="kpi-label">Normales</p></div>
+                <div class="kpi-card"><p id="pkgStatPromo" class="kpi-value">0</p><p class="kpi-label">Promocionales</p></div>
+            </div>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <input type="text" id="filtroPaquetesTexto" placeholder="Buscar paquete" oninput="aplicarFiltrosPaquetes()" style="min-width:230px">
+                <select id="filtroPaquetesTipo" onchange="aplicarFiltrosPaquetes()" style="min-width:180px">
+                    <option value="">Todos los tipos</option>
+                    <option value="normal">Normal</option>
+                    <option value="promo">Promocional</option>
+                </select>
+                <button onclick="limpiarFiltrosPaquetes()" class="btn-main">Limpiar filtros</button>
+            </div>
             <div class="overflow-auto">
-                <table class="w-full text-sm table-soft">
+                <table id="tablaPaquetesWrap" class="w-full text-sm table-soft">
                     <thead>
                         <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
                             <th class="py-2">Nombre</th><th>Precio 1</th><th>Precio 2</th><th>Incluye</th><th>Tipo</th><th class="text-right">Acciones</th>
@@ -125,6 +149,7 @@
                     </thead>
                     <tbody id="tablaPaquetes"></tbody>
                 </table>
+                <div id="cardsPaquetesWrap" class="hidden grid md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
             </div>
         </section>
 
@@ -282,6 +307,7 @@
         let paquetesCache = [];
         let promocionesCache = [];
         let citasCache = [];
+        let paquetesViewMode = 'tabla';
 
         function getAdminToken() {
             return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
@@ -421,20 +447,101 @@
             const res = await fetch(`${API_URL}/obtener-paquetes`);
             if (!res.ok) return;
             paquetesCache = await res.json();
+            renderPaquetes(paquetesCache);
+        }
+
+        function updatePackageKPIs(data) {
+            const total = data.length;
+            const promo = data.filter((p) => Number(p.es_promocion) === 1).length;
+            const normal = total - promo;
+            document.getElementById('pkgStatTotal').textContent = String(total);
+            document.getElementById('pkgStatNormal').textContent = String(normal);
+            document.getElementById('pkgStatPromo').textContent = String(promo);
+        }
+
+        function renderPaquetes(data) {
             const tbody = document.getElementById('tablaPaquetes');
-            tbody.innerHTML = paquetesCache.map((p) => `
+            const cards = document.getElementById('cardsPaquetesWrap');
+            if (!tbody || !cards) return;
+
+            updatePackageKPIs(data);
+
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-3" style="color:#a6c3ec">Sin paquetes</td></tr>';
+                cards.innerHTML = '<div class="panel" style="background:rgba(10,25,55,.35); color:#a6c3ec">Sin paquetes</div>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((p) => `
                 <tr class="border-b" style="border-color:rgba(16,199,200,.28)">
                     <td class="py-2">${escapeHtml(p.nombre)}</td>
                     <td>$${escapeHtml(p.precio_sedan)}</td>
                     <td>$${escapeHtml(p.precio_camioneta)}</td>
                     <td>${escapeHtml(p.incluye || '')}</td>
-                    <td>${Number(p.es_promocion) ? 'Promocional' : 'Normal'}</td>
+                    <td>${Number(p.es_promocion) ? '<span class="pkg-chip pkg-chip-promo">Promocional</span>' : '<span class="pkg-chip pkg-chip-normal">Normal</span>'}</td>
                     <td class="text-right">
                         <button onclick="abrirModalEditarPaquete(${p.id})" class="mr-2" style="color:#6ee7f0">Editar</button>
                         <button onclick="eliminarPaquete(${p.id})" style="color:#ff8a8a">Eliminar</button>
                     </td>
                 </tr>
             `).join('');
+
+            cards.innerHTML = data.map((p) => `
+                <article class="panel" style="background:rgba(10,25,55,.35)">
+                    <div class="flex justify-between items-start gap-2 mb-2">
+                        <h3 class="font-black" style="color:#dffbff">${escapeHtml(p.nombre)}</h3>
+                        ${Number(p.es_promocion) ? '<span class="pkg-chip pkg-chip-promo">Promocional</span>' : '<span class="pkg-chip pkg-chip-normal">Normal</span>'}
+                    </div>
+                    <p class="text-xs mb-2" style="color:#9fd8f5">Incluye: ${escapeHtml(p.incluye || 'Sin descripcion')}</p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="kpi-card"><p class="kpi-label">Precio 1</p><p class="kpi-value">$${escapeHtml(p.precio_sedan)}</p></div>
+                        <div class="kpi-card"><p class="kpi-label">Precio 2</p><p class="kpi-value">$${escapeHtml(p.precio_camioneta)}</p></div>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button onclick="abrirModalEditarPaquete(${p.id})" class="btn-main">Editar</button>
+                        <button onclick="eliminarPaquete(${p.id})" class="btn-main" style="background:linear-gradient(120deg,#fb7185,#ff6b6b)">Eliminar</button>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function aplicarFiltrosPaquetes() {
+            const texto = String(document.getElementById('filtroPaquetesTexto')?.value || '').toLowerCase().trim();
+            const tipo = String(document.getElementById('filtroPaquetesTipo')?.value || '').toLowerCase().trim();
+
+            const filtrados = paquetesCache.filter((p) => {
+                const nombre = String(p.nombre || '').toLowerCase();
+                const incluye = String(p.incluye || '').toLowerCase();
+                const matchTexto = !texto || nombre.includes(texto) || incluye.includes(texto);
+                const isPromo = Number(p.es_promocion) === 1;
+                const matchTipo = !tipo || (tipo === 'promo' ? isPromo : !isPromo);
+                return matchTexto && matchTipo;
+            });
+
+            renderPaquetes(filtrados);
+        }
+
+        function limpiarFiltrosPaquetes() {
+            const txt = document.getElementById('filtroPaquetesTexto');
+            const typ = document.getElementById('filtroPaquetesTipo');
+            if (txt) txt.value = '';
+            if (typ) typ.value = '';
+            renderPaquetes(paquetesCache);
+        }
+
+        function setVistaPaquetes(mode) {
+            paquetesViewMode = mode === 'cards' ? 'cards' : 'tabla';
+            const tableWrap = document.getElementById('tablaPaquetesWrap');
+            const cardsWrap = document.getElementById('cardsPaquetesWrap');
+            const btnTable = document.getElementById('btnVistaPaquetesTabla');
+            const btnCards = document.getElementById('btnVistaPaquetesCards');
+            if (!tableWrap || !cardsWrap || !btnTable || !btnCards) return;
+
+            const isCards = paquetesViewMode === 'cards';
+            tableWrap.classList.toggle('hidden', isCards);
+            cardsWrap.classList.toggle('hidden', !isCards);
+            btnTable.style.filter = isCards ? 'saturate(.5) brightness(.9)' : 'none';
+            btnCards.style.filter = isCards ? 'none' : 'saturate(.5) brightness(.9)';
         }
 
         function abrirModalNuevoPaquete() { document.getElementById('modalNuevoPaquete').classList.replace('hidden', 'flex'); }
