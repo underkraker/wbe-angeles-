@@ -53,7 +53,7 @@ app.use((req, res, next) => {
     res.status(404).send('Not Found');
 });
 
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, { index: false }));
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dreamclean2026';
@@ -544,6 +544,76 @@ const checkAuth = (req, res, next) => {
     res.status(401).json({ error: 'No autorizado' });
 };
 
+const escapeHtmlText = (value) =>
+    String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+const escapeHtmlAttr = (value) =>
+    escapeHtmlText(value)
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+const applySeoOverrides = (html, config) => {
+    const seoTitle = String(config?.seo_title || '').trim();
+    const seoDescription = String(config?.seo_description || '').trim();
+    const seoKeywords = String(config?.seo_keywords || '').trim();
+    const seoImage = String(config?.seo_og_image || '').trim();
+    const seoCanonical = String(config?.seo_canonical_url || '').trim();
+
+    let updatedHtml = html;
+
+    if (seoTitle) {
+        const safeTitle = escapeHtmlText(seoTitle);
+        updatedHtml = updatedHtml.replace(/<title>[^<]*<\/title>/i, `<title>${safeTitle}</title>`);
+        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:title"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoTitle)}$2`);
+        updatedHtml = updatedHtml.replace(/(<meta\s+name="twitter:title"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoTitle)}$2`);
+    }
+
+    if (seoDescription) {
+        const safeDescription = escapeHtmlAttr(seoDescription);
+        updatedHtml = updatedHtml.replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*>)/i, `$1${safeDescription}$2`);
+        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:description"\s+content=")[^"]*("\s*>)/i, `$1${safeDescription}$2`);
+        updatedHtml = updatedHtml.replace(/(<meta\s+name="twitter:description"\s+content=")[^"]*("\s*>)/i, `$1${safeDescription}$2`);
+    }
+
+    if (seoKeywords) {
+        updatedHtml = updatedHtml.replace(/(<meta\s+name="keywords"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoKeywords)}$2`);
+    }
+
+    if (seoImage) {
+        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:image"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoImage)}$2`);
+        updatedHtml = updatedHtml.replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoImage)}$2`);
+    }
+
+    if (seoCanonical) {
+        const safeCanonical = escapeHtmlAttr(seoCanonical);
+        updatedHtml = updatedHtml.replace(/(<link\s+rel="canonical"\s+href=")[^"]*("\s*>)/i, `$1${safeCanonical}$2`);
+        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:url"\s+content=")[^"]*("\s*>)/i, `$1${safeCanonical}$2`);
+    }
+
+    return updatedHtml;
+};
+
+const serveIndexWithSeo = (_req, res) => {
+    const indexPath = path.join(__dirname, 'index.html');
+    fs.readFile(indexPath, 'utf8', (fileErr, html) => {
+        if (fileErr) {
+            res.status(500).send('No se pudo cargar el sitio.');
+            return;
+        }
+
+        db.get('SELECT seo_title, seo_description, seo_keywords, seo_og_image, seo_canonical_url FROM configuracion WHERE id = 1', (cfgErr, row) => {
+            if (cfgErr || !row) {
+                res.type('html').send(html);
+                return;
+            }
+            res.type('html').send(applySeoOverrides(html, row));
+        });
+    });
+};
+
 cron.schedule('0 * * * *', () => {
     db.get('SELECT * FROM configuracion WHERE id = 1', (err, config) => {
         if (err || !config) return;
@@ -964,11 +1034,11 @@ app.post('/whatsapp-logout', checkAuth, async (_req, res) => {
 });
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    serveIndexWithSeo(_req, res);
 });
 
 app.get('/index.html', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    serveIndexWithSeo(_req, res);
 });
 
 app.get('/admin.html', (_req, res) => {
