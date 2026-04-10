@@ -4,25 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dream Clean | Limpieza premium para autos y muebles</title>
-    <meta name="description" content="Limpieza profesional para autos y muebles en Hermosillo. Agenda tu cita en minutos con confirmacion por WhatsApp y promociones activas cada semana.">
-    <meta name="keywords" content="Dream Clean, limpieza de autos, limpieza de muebles, Hermosillo, detallado automotriz, limpieza premium, agenda por WhatsApp">
-    <meta name="author" content="Dream Clean">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://dream-clean.vpskraker.shop/">
-
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Dream Clean">
-    <meta property="og:locale" content="es_MX">
-    <meta property="og:title" content="Dream Clean | Limpieza premium para autos y muebles">
-    <meta property="og:description" content="Servicio profesional en Hermosillo con agenda rapida, seguimiento por WhatsApp y promociones activas.">
-    <meta property="og:url" content="https://dream-clean.vpskraker.shop/">
-    <meta property="og:image" content="https://dream-clean.vpskraker.shop/Gemini_Generated_Image_1ul01j1ul01j1ul0.png">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Dream Clean | Limpieza premium para autos y muebles">
-    <meta name="twitter:description" content="Agenda tu cita por WhatsApp con Dream Clean en Hermosillo.">
-    <meta name="twitter:image" content="https://dream-clean.vpskraker.shop/Gemini_Generated_Image_1ul01j1ul01j1ul0.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -157,118 +138,76 @@
         </div>
     </section>
 
+    <section id="redes" class="py-16 px-6" style="background:#ffffff">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl md:text-4xl font-black mb-3 uppercase text-center" style="color:var(--dc-blue)">Nuestras redes</h2>
+            <p class="text-center mb-10" style="color:#35558f">Siguenos para ver resultados, promociones y novedades de Dream Clean.</p>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <a id="social-instagram" target="_blank" rel="noopener noreferrer" class="dc-card p-5 text-center font-bold hidden" style="color:var(--dc-blue)">Instagram</a>
+                <a id="social-facebook" target="_blank" rel="noopener noreferrer" class="dc-card p-5 text-center font-bold hidden" style="color:var(--dc-blue)">Facebook</a>
+                <a id="social-tiktok" target="_blank" rel="noopener noreferrer" class="dc-card p-5 text-center font-bold hidden" style="color:var(--dc-blue)">TikTok</a>
+                <a id="social-whatsapp" target="_blank" rel="noopener noreferrer" class="dc-card p-5 text-center font-bold hidden" style="color:var(--dc-blue)">WhatsApp</a>
+            </div>
+            <p id="social-empty" class="text-center text-sm mt-6" style="color:#5474a7">Muy pronto publicaremos nuestras redes oficiales.</p>
+        </div>
+    </section>
+
     <footer class="px-6 py-8" style="background:linear-gradient(180deg,#0e2559 0%,#081737 100%); border-top:1px solid rgba(16,199,200,.35)">
         <div class="max-w-6xl mx-auto text-center">
             <p class="text-sm md:text-base font-semibold" style="color:#d9f7ff">Dream Clean © 2026 | by Kraker</p>
-            <div class="mt-3 flex flex-wrap justify-center gap-3 text-xs md:text-sm" style="color:#a9d8e9">
-                <button type="button" onclick="openLegalModal('privacy')" class="underline underline-offset-4 hover:text-white transition">Aviso de privacidad</button>
-                <span>·</span>
-                <button type="button" onclick="openLegalModal('terms')" class="underline underline-offset-4 hover:text-white transition">Términos y condiciones</button>
-                <span>·</span>
-                <a href="tel:+52662150736" class="underline underline-offset-4 hover:text-white transition">Contacto Dream Clean: +52 662150736</a>
-            </div>
         </div>
     </footer>
-
-    <div id="legalModal" class="fixed inset-0 z-[110] items-center justify-center p-4" style="background:rgba(11,31,77,.74); display:none; opacity:0; transition:opacity .2s ease;">
-        <div class="w-full max-w-2xl rounded-2xl p-6 md:p-8 shadow-2xl" style="background:#ffffff; color:var(--dc-blue)">
-            <div class="flex items-start justify-between gap-4 mb-4">
-                <h3 id="legalTitle" class="text-2xl font-black uppercase">Aviso</h3>
-                <button type="button" onclick="closeLegalModal()" class="text-2xl leading-none font-black" style="color:#4c6da7">&times;</button>
-            </div>
-            <div id="legalBody" class="text-sm md:text-base leading-relaxed" style="color:#2e4c80"></div>
-        </div>
-    </div>
 
     <script>
         const API_URL = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
         const modal = document.getElementById('bookingModal');
-        const legalModal = document.getElementById('legalModal');
-        const legalTitle = document.getElementById('legalTitle');
-        const legalBody = document.getElementById('legalBody');
         const errorDiv = document.getElementById('mensajeError');
 
-        const LEGAL_CONTENT = {
-            privacy: {
-                title: 'Aviso de Privacidad',
-                html: `
-                    <p class="mb-3">En Dream Clean tratamos tus datos personales de forma responsable y solo para fines de servicio.</p>
-                    <p class="mb-3">Los datos que proporcionas en este sitio (nombre, telefono, modelo del auto o mueble, fecha y hora) se utilizan para gestionar citas, confirmar servicios y dar seguimiento por WhatsApp.</p>
-                    <p class="mb-3">No compartimos tu informacion con terceros ajenos a la operacion de Dream Clean, salvo requerimiento legal aplicable.</p>
-                    <p>Puedes solicitar la actualizacion o eliminacion de tus datos contactandonos al numero publicado en este sitio.</p>
-                `
-            },
-            terms: {
-                title: 'Terminos y Condiciones',
-                html: `
-                    <p class="mb-3">Al agendar en este sitio aceptas la disponibilidad de horarios y la confirmacion final por parte de Dream Clean.</p>
-                    <p class="mb-3">Los precios y promociones pueden variar segun tipo de servicio, tamano del vehiculo o mueble, zona y condiciones del trabajo.</p>
-                    <p class="mb-3">Si necesitas reprogramar o cancelar, te pedimos avisar con anticipacion por WhatsApp para liberar tu espacio.</p>
-                    <p>Dream Clean puede actualizar estos terminos cuando sea necesario para mejorar el servicio.</p>
-                `
-            }
-        };
-
         window.onload = async () => {
-            await cargarSeoPublico();
             await cargarPaquetes();
             initComentariosForm();
             cargarComentarios();
             await cargarMediaVisual();
             await cargarPromocionesPublicas();
+            await cargarRedesPublicas();
         };
 
-        function setMetaByName(name, content) {
-            if (!content) return;
-            const meta = document.querySelector(`meta[name="${name}"]`);
-            if (meta) meta.setAttribute('content', content);
+        function normalizeSocialUrl(value) {
+            const input = String(value || '').trim();
+            if (!input) return '';
+            if (/^https?:\/\//i.test(input) || /^tel:/i.test(input)) return input;
+            if (/^wa\.me\//i.test(input)) return `https://${input}`;
+            if (/^[0-9+\s()-]+$/.test(input)) return `tel:${input.replace(/\s+/g, '')}`;
+            return `https://${input}`;
         }
 
-        function setMetaByProperty(property, content) {
-            if (!content) return;
-            const meta = document.querySelector(`meta[property="${property}"]`);
-            if (meta) meta.setAttribute('content', content);
+        function bindSocialLink(id, rawUrl) {
+            const el = document.getElementById(id);
+            if (!el) return false;
+            const href = normalizeSocialUrl(rawUrl);
+            if (!href) {
+                el.classList.add('hidden');
+                el.removeAttribute('href');
+                return false;
+            }
+            el.href = href;
+            el.classList.remove('hidden');
+            return true;
         }
 
-        function setCanonicalUrl(url) {
-            if (!url) return;
-            const link = document.querySelector('link[rel="canonical"]');
-            if (link) link.setAttribute('href', url);
-        }
-
-        async function cargarSeoPublico() {
+        async function cargarRedesPublicas() {
+            const empty = document.getElementById('social-empty');
             try {
                 const res = await fetch(`${API_URL}/obtener-config`);
                 if (!res.ok) return;
                 const conf = await res.json();
-
-                const seoTitle = String(conf.seo_title || '').trim();
-                const seoDescription = String(conf.seo_description || '').trim();
-                const seoKeywords = String(conf.seo_keywords || '').trim();
-                const seoOgImage = String(conf.seo_og_image || '').trim();
-                const seoCanonical = String(conf.seo_canonical_url || '').trim();
-
-                if (seoTitle) {
-                    document.title = seoTitle;
-                    setMetaByProperty('og:title', seoTitle);
-                    setMetaByName('twitter:title', seoTitle);
-                }
-                if (seoDescription) {
-                    setMetaByName('description', seoDescription);
-                    setMetaByProperty('og:description', seoDescription);
-                    setMetaByName('twitter:description', seoDescription);
-                }
-                if (seoKeywords) {
-                    setMetaByName('keywords', seoKeywords);
-                }
-                if (seoOgImage) {
-                    setMetaByProperty('og:image', seoOgImage);
-                    setMetaByName('twitter:image', seoOgImage);
-                }
-                if (seoCanonical) {
-                    setCanonicalUrl(seoCanonical);
-                    setMetaByProperty('og:url', seoCanonical);
-                }
+                const hasAny = [
+                    bindSocialLink('social-instagram', conf.social_instagram),
+                    bindSocialLink('social-facebook', conf.social_facebook),
+                    bindSocialLink('social-tiktok', conf.social_tiktok),
+                    bindSocialLink('social-whatsapp', conf.social_whatsapp)
+                ].some(Boolean);
+                if (empty) empty.classList.toggle('hidden', hasAny);
             } catch (_err) {
                 // noop
             }
@@ -375,20 +314,6 @@
         function closeModal() {
             modal.style.opacity = '0';
             setTimeout(() => { modal.style.display = 'none'; }, 200);
-        }
-
-        function openLegalModal(type) {
-            const content = LEGAL_CONTENT[type];
-            if (!content) return;
-            legalTitle.textContent = content.title;
-            legalBody.innerHTML = content.html;
-            legalModal.style.display = 'flex';
-            requestAnimationFrame(() => { legalModal.style.opacity = '1'; });
-        }
-
-        function closeLegalModal() {
-            legalModal.style.opacity = '0';
-            setTimeout(() => { legalModal.style.display = 'none'; }, 200);
         }
 
         async function validarYEnviar() {

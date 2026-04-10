@@ -62,12 +62,11 @@
                 <h2 class="text-lg section-title">Configuración</h2>
                 <input type="text" id="conf_personal" placeholder="Telefono personal (admin)">
                 <input type="text" id="conf_local" placeholder="Telefono negocio (WhatsApp)">
-                <h3 class="text-sm font-bold uppercase mt-2" style="color:#bfefff">SEO / Redes</h3>
-                <input type="text" id="conf_seo_title" placeholder="Titulo SEO (Google y redes)">
-                <textarea id="conf_seo_desc" placeholder="Descripcion SEO" rows="3"></textarea>
-                <input type="text" id="conf_seo_keywords" placeholder="Palabras clave separadas por coma">
-                <input type="url" id="conf_seo_image" placeholder="URL imagen para compartir (OG)">
-                <input type="url" id="conf_seo_canonical" placeholder="URL canonica (ej. https://tu-dominio.com/)">
+                <h3 class="text-sm font-bold uppercase mt-2" style="color:#bfefff">Redes sociales</h3>
+                <input type="url" id="conf_social_instagram" placeholder="Instagram (URL)">
+                <input type="url" id="conf_social_facebook" placeholder="Facebook (URL)">
+                <input type="url" id="conf_social_tiktok" placeholder="TikTok (URL)">
+                <input type="text" id="conf_social_whatsapp" placeholder="WhatsApp (URL o numero)">
                 <button onclick="guardarConfig()" class="btn-main">Guardar configuración</button>
             </div>
             <div class="panel">
@@ -296,25 +295,23 @@
             const data = await res.json();
             document.getElementById('conf_personal').value = data.telefono_personal || '';
             document.getElementById('conf_local').value = data.telefono_local || '';
-            document.getElementById('conf_seo_title').value = data.seo_title || '';
-            document.getElementById('conf_seo_desc').value = data.seo_description || '';
-            document.getElementById('conf_seo_keywords').value = data.seo_keywords || '';
-            document.getElementById('conf_seo_image').value = data.seo_og_image || '';
-            document.getElementById('conf_seo_canonical').value = data.seo_canonical_url || '';
+            document.getElementById('conf_social_instagram').value = data.social_instagram || '';
+            document.getElementById('conf_social_facebook').value = data.social_facebook || '';
+            document.getElementById('conf_social_tiktok').value = data.social_tiktok || '';
+            document.getElementById('conf_social_whatsapp').value = data.social_whatsapp || '';
         }
 
         async function guardarConfig() {
             const personal = document.getElementById('conf_personal').value;
             const local = document.getElementById('conf_local').value;
-            const seo_title = document.getElementById('conf_seo_title').value;
-            const seo_description = document.getElementById('conf_seo_desc').value;
-            const seo_keywords = document.getElementById('conf_seo_keywords').value;
-            const seo_og_image = document.getElementById('conf_seo_image').value;
-            const seo_canonical_url = document.getElementById('conf_seo_canonical').value;
+            const social_instagram = document.getElementById('conf_social_instagram').value;
+            const social_facebook = document.getElementById('conf_social_facebook').value;
+            const social_tiktok = document.getElementById('conf_social_tiktok').value;
+            const social_whatsapp = document.getElementById('conf_social_whatsapp').value;
             const res = await fetch(`${API_URL}/actualizar-config`, {
                 method: 'POST',
                 headers: authHeaders(),
-                body: JSON.stringify({ personal, local, seo_title, seo_description, seo_keywords, seo_og_image, seo_canonical_url })
+                body: JSON.stringify({ personal, local, social_instagram, social_facebook, social_tiktok, social_whatsapp })
             });
             alert(res.ok ? 'Configuración guardada' : 'No se pudo guardar');
         }

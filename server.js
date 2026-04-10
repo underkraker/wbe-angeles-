@@ -53,7 +53,7 @@ app.use((req, res, next) => {
     res.status(404).send('Not Found');
 });
 
-app.use(express.static(__dirname, { index: false }));
+app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dreamclean2026';
@@ -266,11 +266,10 @@ const db = new sqlite3.Database('./dream_clean.sqlite', (err) => {
                 }
             });
         };
-        ensureConfigColumn('seo_title', "TEXT DEFAULT ''");
-        ensureConfigColumn('seo_description', "TEXT DEFAULT ''");
-        ensureConfigColumn('seo_keywords', "TEXT DEFAULT ''");
-        ensureConfigColumn('seo_og_image', "TEXT DEFAULT ''");
-        ensureConfigColumn('seo_canonical_url', "TEXT DEFAULT ''");
+        ensureConfigColumn('social_instagram', "TEXT DEFAULT ''");
+        ensureConfigColumn('social_facebook', "TEXT DEFAULT ''");
+        ensureConfigColumn('social_tiktok', "TEXT DEFAULT ''");
+        ensureConfigColumn('social_whatsapp', "TEXT DEFAULT ''");
         db.run('CREATE TABLE IF NOT EXISTS citas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre_cliente TEXT, telefono TEXT, modelo_auto TEXT, servicio TEXT, fecha_cita TEXT, hora_cita TEXT, recordatorio_24h INTEGER DEFAULT 0, recordatorio_1h INTEGER DEFAULT 0)');
         db.run(`CREATE TABLE IF NOT EXISTS comentarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -542,76 +541,6 @@ const checkAuth = (req, res, next) => {
     }
 
     res.status(401).json({ error: 'No autorizado' });
-};
-
-const escapeHtmlText = (value) =>
-    String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-const escapeHtmlAttr = (value) =>
-    escapeHtmlText(value)
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-
-const applySeoOverrides = (html, config) => {
-    const seoTitle = String(config?.seo_title || '').trim();
-    const seoDescription = String(config?.seo_description || '').trim();
-    const seoKeywords = String(config?.seo_keywords || '').trim();
-    const seoImage = String(config?.seo_og_image || '').trim();
-    const seoCanonical = String(config?.seo_canonical_url || '').trim();
-
-    let updatedHtml = html;
-
-    if (seoTitle) {
-        const safeTitle = escapeHtmlText(seoTitle);
-        updatedHtml = updatedHtml.replace(/<title>[^<]*<\/title>/i, `<title>${safeTitle}</title>`);
-        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:title"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoTitle)}$2`);
-        updatedHtml = updatedHtml.replace(/(<meta\s+name="twitter:title"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoTitle)}$2`);
-    }
-
-    if (seoDescription) {
-        const safeDescription = escapeHtmlAttr(seoDescription);
-        updatedHtml = updatedHtml.replace(/(<meta\s+name="description"\s+content=")[^"]*("\s*>)/i, `$1${safeDescription}$2`);
-        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:description"\s+content=")[^"]*("\s*>)/i, `$1${safeDescription}$2`);
-        updatedHtml = updatedHtml.replace(/(<meta\s+name="twitter:description"\s+content=")[^"]*("\s*>)/i, `$1${safeDescription}$2`);
-    }
-
-    if (seoKeywords) {
-        updatedHtml = updatedHtml.replace(/(<meta\s+name="keywords"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoKeywords)}$2`);
-    }
-
-    if (seoImage) {
-        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:image"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoImage)}$2`);
-        updatedHtml = updatedHtml.replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*("\s*>)/i, `$1${escapeHtmlAttr(seoImage)}$2`);
-    }
-
-    if (seoCanonical) {
-        const safeCanonical = escapeHtmlAttr(seoCanonical);
-        updatedHtml = updatedHtml.replace(/(<link\s+rel="canonical"\s+href=")[^"]*("\s*>)/i, `$1${safeCanonical}$2`);
-        updatedHtml = updatedHtml.replace(/(<meta\s+property="og:url"\s+content=")[^"]*("\s*>)/i, `$1${safeCanonical}$2`);
-    }
-
-    return updatedHtml;
-};
-
-const serveIndexWithSeo = (_req, res) => {
-    const indexPath = path.join(__dirname, 'index.html');
-    fs.readFile(indexPath, 'utf8', (fileErr, html) => {
-        if (fileErr) {
-            res.status(500).send('No se pudo cargar el sitio.');
-            return;
-        }
-
-        db.get('SELECT seo_title, seo_description, seo_keywords, seo_og_image, seo_canonical_url FROM configuracion WHERE id = 1', (cfgErr, row) => {
-            if (cfgErr || !row) {
-                res.type('html').send(html);
-                return;
-            }
-            res.type('html').send(applySeoOverrides(html, row));
-        });
-    });
 };
 
 cron.schedule('0 * * * *', () => {
@@ -971,19 +900,18 @@ app.post('/eliminar-promocion', checkAuth, (req, res) => {
 });
 
 app.post('/actualizar-config', checkAuth, (req, res) => {
-    const { personal, local, seo_title, seo_description, seo_keywords, seo_og_image, seo_canonical_url } = req.body;
+    const { personal, local, social_instagram, social_facebook, social_tiktok, social_whatsapp } = req.body;
     db.run(
         `UPDATE configuracion
-         SET telefono_personal = ?, telefono_local = ?, seo_title = ?, seo_description = ?, seo_keywords = ?, seo_og_image = ?, seo_canonical_url = ?
+         SET telefono_personal = ?, telefono_local = ?, social_instagram = ?, social_facebook = ?, social_tiktok = ?, social_whatsapp = ?
          WHERE id = 1`,
         [
             String(personal || '').trim(),
             String(local || '').trim(),
-            String(seo_title || '').trim(),
-            String(seo_description || '').trim(),
-            String(seo_keywords || '').trim(),
-            String(seo_og_image || '').trim(),
-            String(seo_canonical_url || '').trim()
+            String(social_instagram || '').trim(),
+            String(social_facebook || '').trim(),
+            String(social_tiktok || '').trim(),
+            String(social_whatsapp || '').trim()
         ],
         (err) => {
         if (err) return res.status(500).json({ error: 'Database error' });
@@ -1034,11 +962,11 @@ app.post('/whatsapp-logout', checkAuth, async (_req, res) => {
 });
 
 app.get('/', (_req, res) => {
-    serveIndexWithSeo(_req, res);
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/index.html', (_req, res) => {
-    serveIndexWithSeo(_req, res);
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/admin.html', (_req, res) => {
