@@ -60,6 +60,7 @@
         <section class="grid lg:grid-cols-2 gap-6 anim-in anim-in-2">
             <div class="panel space-y-3">
                 <h2 class="text-lg section-title">Configuración</h2>
+                <p class="text-xs" style="color:#9fd8f5">Administra telefonos, redes y contenido visible en la pagina principal.</p>
                 <input type="text" id="conf_personal" placeholder="Telefono personal (admin)">
                 <input type="text" id="conf_local" placeholder="Telefono negocio (WhatsApp)">
                 <h3 class="text-sm font-bold uppercase mt-2" style="color:#bfefff">Redes sociales</h3>
@@ -72,6 +73,40 @@
             <div class="panel">
                 <h2 class="text-lg section-title mb-3">Estado WhatsApp</h2>
                 <div id="waStatus" class="text-sm" style="color:#bfefff">Cargando...</div>
+            </div>
+        </section>
+
+        <section class="panel anim-in anim-in-2">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2 class="text-lg section-title">Contenido principal editable</h2>
+                <span class="chip">Home</span>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-4">
+                <div class="panel" style="background:rgba(10,25,55,.35)">
+                    <h3 class="text-sm font-bold uppercase mb-2" style="color:#bfefff">Bloque de confianza</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="conf_trust_stat_1_value" placeholder="Dato 1 (ej. +1,200)">
+                        <input type="text" id="conf_trust_stat_1_label" placeholder="Texto 1">
+                        <input type="text" id="conf_trust_stat_2_value" placeholder="Dato 2 (ej. 30 min)">
+                        <input type="text" id="conf_trust_stat_2_label" placeholder="Texto 2">
+                        <input type="text" id="conf_trust_stat_3_value" placeholder="Dato 3 (ej. Hermosillo)">
+                        <input type="text" id="conf_trust_stat_3_label" placeholder="Texto 3">
+                    </div>
+                    <input type="text" id="conf_cta_phone" class="mt-2" placeholder="Telefono boton Llamar ahora (+52...)">
+                </div>
+                <div class="panel" style="background:rgba(10,25,55,.35)">
+                    <h3 class="text-sm font-bold uppercase mb-2" style="color:#bfefff">Preguntas frecuentes</h3>
+                    <div class="space-y-2">
+                        <input type="text" id="conf_faq_1_q" placeholder="Pregunta 1">
+                        <textarea id="conf_faq_1_a" rows="2" placeholder="Respuesta 1"></textarea>
+                        <input type="text" id="conf_faq_2_q" placeholder="Pregunta 2">
+                        <textarea id="conf_faq_2_a" rows="2" placeholder="Respuesta 2"></textarea>
+                        <input type="text" id="conf_faq_3_q" placeholder="Pregunta 3">
+                        <textarea id="conf_faq_3_a" rows="2" placeholder="Respuesta 3"></textarea>
+                        <input type="text" id="conf_faq_4_q" placeholder="Pregunta 4">
+                        <textarea id="conf_faq_4_a" rows="2" placeholder="Respuesta 4"></textarea>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -313,6 +348,21 @@
             document.getElementById('conf_social_facebook').value = data.social_facebook || '';
             document.getElementById('conf_social_tiktok').value = data.social_tiktok || '';
             document.getElementById('conf_social_whatsapp').value = data.social_whatsapp || '';
+            document.getElementById('conf_trust_stat_1_value').value = data.trust_stat_1_value || '';
+            document.getElementById('conf_trust_stat_1_label').value = data.trust_stat_1_label || '';
+            document.getElementById('conf_trust_stat_2_value').value = data.trust_stat_2_value || '';
+            document.getElementById('conf_trust_stat_2_label').value = data.trust_stat_2_label || '';
+            document.getElementById('conf_trust_stat_3_value').value = data.trust_stat_3_value || '';
+            document.getElementById('conf_trust_stat_3_label').value = data.trust_stat_3_label || '';
+            document.getElementById('conf_faq_1_q').value = data.faq_1_q || '';
+            document.getElementById('conf_faq_1_a').value = data.faq_1_a || '';
+            document.getElementById('conf_faq_2_q').value = data.faq_2_q || '';
+            document.getElementById('conf_faq_2_a').value = data.faq_2_a || '';
+            document.getElementById('conf_faq_3_q').value = data.faq_3_q || '';
+            document.getElementById('conf_faq_3_a').value = data.faq_3_a || '';
+            document.getElementById('conf_faq_4_q').value = data.faq_4_q || '';
+            document.getElementById('conf_faq_4_a').value = data.faq_4_a || '';
+            document.getElementById('conf_cta_phone').value = data.cta_phone || '';
         }
 
         async function guardarConfig() {
@@ -322,10 +372,47 @@
             const social_facebook = document.getElementById('conf_social_facebook').value;
             const social_tiktok = document.getElementById('conf_social_tiktok').value;
             const social_whatsapp = document.getElementById('conf_social_whatsapp').value;
+            const trust_stat_1_value = document.getElementById('conf_trust_stat_1_value').value;
+            const trust_stat_1_label = document.getElementById('conf_trust_stat_1_label').value;
+            const trust_stat_2_value = document.getElementById('conf_trust_stat_2_value').value;
+            const trust_stat_2_label = document.getElementById('conf_trust_stat_2_label').value;
+            const trust_stat_3_value = document.getElementById('conf_trust_stat_3_value').value;
+            const trust_stat_3_label = document.getElementById('conf_trust_stat_3_label').value;
+            const faq_1_q = document.getElementById('conf_faq_1_q').value;
+            const faq_1_a = document.getElementById('conf_faq_1_a').value;
+            const faq_2_q = document.getElementById('conf_faq_2_q').value;
+            const faq_2_a = document.getElementById('conf_faq_2_a').value;
+            const faq_3_q = document.getElementById('conf_faq_3_q').value;
+            const faq_3_a = document.getElementById('conf_faq_3_a').value;
+            const faq_4_q = document.getElementById('conf_faq_4_q').value;
+            const faq_4_a = document.getElementById('conf_faq_4_a').value;
+            const cta_phone = document.getElementById('conf_cta_phone').value;
             const res = await fetch(`${API_URL}/actualizar-config`, {
                 method: 'POST',
                 headers: authHeaders(),
-                body: JSON.stringify({ personal, local, social_instagram, social_facebook, social_tiktok, social_whatsapp })
+                body: JSON.stringify({
+                    personal,
+                    local,
+                    social_instagram,
+                    social_facebook,
+                    social_tiktok,
+                    social_whatsapp,
+                    trust_stat_1_value,
+                    trust_stat_1_label,
+                    trust_stat_2_value,
+                    trust_stat_2_label,
+                    trust_stat_3_value,
+                    trust_stat_3_label,
+                    faq_1_q,
+                    faq_1_a,
+                    faq_2_q,
+                    faq_2_a,
+                    faq_3_q,
+                    faq_3_a,
+                    faq_4_q,
+                    faq_4_a,
+                    cta_phone
+                })
             });
             alert(res.ok ? 'Configuración guardada' : 'No se pudo guardar');
         }

@@ -270,6 +270,21 @@ const db = new sqlite3.Database('./dream_clean.sqlite', (err) => {
         ensureConfigColumn('social_facebook', "TEXT DEFAULT ''");
         ensureConfigColumn('social_tiktok', "TEXT DEFAULT ''");
         ensureConfigColumn('social_whatsapp', "TEXT DEFAULT ''");
+        ensureConfigColumn('trust_stat_1_value', "TEXT DEFAULT ''");
+        ensureConfigColumn('trust_stat_1_label', "TEXT DEFAULT ''");
+        ensureConfigColumn('trust_stat_2_value', "TEXT DEFAULT ''");
+        ensureConfigColumn('trust_stat_2_label', "TEXT DEFAULT ''");
+        ensureConfigColumn('trust_stat_3_value', "TEXT DEFAULT ''");
+        ensureConfigColumn('trust_stat_3_label', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_1_q', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_1_a', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_2_q', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_2_a', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_3_q', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_3_a', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_4_q', "TEXT DEFAULT ''");
+        ensureConfigColumn('faq_4_a', "TEXT DEFAULT ''");
+        ensureConfigColumn('cta_phone', "TEXT DEFAULT ''");
         db.run("CREATE TABLE IF NOT EXISTS citas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre_cliente TEXT, telefono TEXT, modelo_auto TEXT, servicio TEXT, fecha_cita TEXT, hora_cita TEXT, estado_cita TEXT DEFAULT 'pendiente', recordatorio_24h INTEGER DEFAULT 0, recordatorio_1h INTEGER DEFAULT 0)");
         db.run("ALTER TABLE citas ADD COLUMN estado_cita TEXT DEFAULT 'pendiente'", (err) => {
             if (err && !String(err.message || '').includes('duplicate column name')) {
@@ -921,10 +936,34 @@ app.post('/eliminar-promocion', checkAuth, (req, res) => {
 });
 
 app.post('/actualizar-config', checkAuth, (req, res) => {
-    const { personal, local, social_instagram, social_facebook, social_tiktok, social_whatsapp } = req.body;
+    const {
+        personal,
+        local,
+        social_instagram,
+        social_facebook,
+        social_tiktok,
+        social_whatsapp,
+        trust_stat_1_value,
+        trust_stat_1_label,
+        trust_stat_2_value,
+        trust_stat_2_label,
+        trust_stat_3_value,
+        trust_stat_3_label,
+        faq_1_q,
+        faq_1_a,
+        faq_2_q,
+        faq_2_a,
+        faq_3_q,
+        faq_3_a,
+        faq_4_q,
+        faq_4_a,
+        cta_phone
+    } = req.body;
     db.run(
         `UPDATE configuracion
-         SET telefono_personal = ?, telefono_local = ?, social_instagram = ?, social_facebook = ?, social_tiktok = ?, social_whatsapp = ?
+         SET telefono_personal = ?, telefono_local = ?, social_instagram = ?, social_facebook = ?, social_tiktok = ?, social_whatsapp = ?,
+             trust_stat_1_value = ?, trust_stat_1_label = ?, trust_stat_2_value = ?, trust_stat_2_label = ?, trust_stat_3_value = ?, trust_stat_3_label = ?,
+             faq_1_q = ?, faq_1_a = ?, faq_2_q = ?, faq_2_a = ?, faq_3_q = ?, faq_3_a = ?, faq_4_q = ?, faq_4_a = ?, cta_phone = ?
          WHERE id = 1`,
         [
             String(personal || '').trim(),
@@ -932,7 +971,22 @@ app.post('/actualizar-config', checkAuth, (req, res) => {
             String(social_instagram || '').trim(),
             String(social_facebook || '').trim(),
             String(social_tiktok || '').trim(),
-            String(social_whatsapp || '').trim()
+            String(social_whatsapp || '').trim(),
+            String(trust_stat_1_value || '').trim(),
+            String(trust_stat_1_label || '').trim(),
+            String(trust_stat_2_value || '').trim(),
+            String(trust_stat_2_label || '').trim(),
+            String(trust_stat_3_value || '').trim(),
+            String(trust_stat_3_label || '').trim(),
+            String(faq_1_q || '').trim(),
+            String(faq_1_a || '').trim(),
+            String(faq_2_q || '').trim(),
+            String(faq_2_a || '').trim(),
+            String(faq_3_q || '').trim(),
+            String(faq_3_a || '').trim(),
+            String(faq_4_q || '').trim(),
+            String(faq_4_a || '').trim(),
+            String(cta_phone || '').trim()
         ],
         (err) => {
         if (err) return res.status(500).json({ error: 'Database error' });
