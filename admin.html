@@ -106,6 +106,20 @@
         </section>
 
         <section class="panel anim-in anim-in-5">
+            <h2 class="text-lg section-title mb-3">Citas</h2>
+            <div class="overflow-auto">
+                <table class="w-full text-sm table-soft">
+                    <thead>
+                        <tr class="text-left border-b" style="border-color:rgba(16,199,200,.35)">
+                            <th class="py-2">Nombre</th><th>Telefono</th><th>Modelo</th><th>Servicio</th><th>Fecha</th><th>Hora</th><th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCitas"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel anim-in anim-in-6">
             <h2 class="text-lg section-title mb-3">Comentarios</h2>
             <div class="overflow-auto">
                 <table class="w-full text-sm table-soft">
@@ -247,13 +261,27 @@
             document.getElementById('passInput').value = '';
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('adminContent').classList.remove('hidden');
-            await cargarConfig();
-            await cargarPaquetes();
-            await cargarPromociones();
-            await cargarCitas();
-            await cargarComentariosAdmin();
-            await cargarMediaAdmin();
-            await cargarWhatsApp();
+            await initAdminData();
+        }
+
+        async function initAdminData() {
+            const loaders = [
+                cargarConfig,
+                cargarPaquetes,
+                cargarPromociones,
+                cargarCitas,
+                cargarComentariosAdmin,
+                cargarMediaAdmin,
+                cargarWhatsApp
+            ];
+
+            for (const load of loaders) {
+                try {
+                    await load();
+                } catch (_err) {
+                    // noop
+                }
+            }
         }
 
         async function cargarConfig() {
@@ -407,6 +435,7 @@
 
         async function cargarCitas() {
             const tbody = document.getElementById('tablaCitas');
+            if (!tbody) return;
             const res = await fetch(`${API_URL}/obtener-citas`, { headers: { Authorization: `Bearer ${getAdminToken()}` } });
             if (!res.ok) {
                 tbody.innerHTML = '<tr><td colspan="7" class="py-3" style="color:#ff8a8a">No se pudieron cargar</td></tr>';
@@ -584,13 +613,7 @@
                 }
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('adminContent').classList.remove('hidden');
-                await cargarConfig();
-                await cargarPaquetes();
-                await cargarPromociones();
-                await cargarCitas();
-                await cargarComentariosAdmin();
-                await cargarMediaAdmin();
-                await cargarWhatsApp();
+                await initAdminData();
             } catch (error) {
                 sessionStorage.removeItem(ADMIN_TOKEN_KEY);
             }
