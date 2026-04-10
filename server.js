@@ -259,6 +259,18 @@ const db = new sqlite3.Database('./dream_clean.sqlite', (err) => {
     db.serialize(() => {
         db.run('CREATE TABLE IF NOT EXISTS servicios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, precio_sedan REAL, precio_camioneta REAL)');
         db.run('CREATE TABLE IF NOT EXISTS configuracion (id INTEGER PRIMARY KEY, telefono_personal TEXT, telefono_local TEXT)');
+        const ensureConfigColumn = (columnName, definition) => {
+            db.run(`ALTER TABLE configuracion ADD COLUMN ${columnName} ${definition}`, (err) => {
+                if (err && !String(err.message || '').includes('duplicate column name')) {
+                    console.error(`No se pudo crear columna ${columnName} en configuracion:`, err.message);
+                }
+            });
+        };
+        ensureConfigColumn('seo_title', "TEXT DEFAULT ''");
+        ensureConfigColumn('seo_description', "TEXT DEFAULT ''");
+        ensureConfigColumn('seo_keywords', "TEXT DEFAULT ''");
+        ensureConfigColumn('seo_og_image', "TEXT DEFAULT ''");
+        ensureConfigColumn('seo_canonical_url', "TEXT DEFAULT ''");
         db.run('CREATE TABLE IF NOT EXISTS citas (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre_cliente TEXT, telefono TEXT, modelo_auto TEXT, servicio TEXT, fecha_cita TEXT, hora_cita TEXT, recordatorio_24h INTEGER DEFAULT 0, recordatorio_1h INTEGER DEFAULT 0)');
         db.run(`CREATE TABLE IF NOT EXISTS comentarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -889,11 +901,25 @@ app.post('/eliminar-promocion', checkAuth, (req, res) => {
 });
 
 app.post('/actualizar-config', checkAuth, (req, res) => {
-    const { personal, local } = req.body;
-    db.run('UPDATE configuracion SET telefono_personal = ?, telefono_local = ? WHERE id = 1', [personal, local], (err) => {
+    const { personal, local, seo_title, seo_description, seo_keywords, seo_og_image, seo_canonical_url } = req.body;
+    db.run(
+        `UPDATE configuracion
+         SET telefono_personal = ?, telefono_local = ?, seo_title = ?, seo_description = ?, seo_keywords = ?, seo_og_image = ?, seo_canonical_url = ?
+         WHERE id = 1`,
+        [
+            String(personal || '').trim(),
+            String(local || '').trim(),
+            String(seo_title || '').trim(),
+            String(seo_description || '').trim(),
+            String(seo_keywords || '').trim(),
+            String(seo_og_image || '').trim(),
+            String(seo_canonical_url || '').trim()
+        ],
+        (err) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.sendStatus(200);
-    });
+        }
+    );
 });
 
 app.get('/whatsapp-status', checkAuth, (_req, res) => {

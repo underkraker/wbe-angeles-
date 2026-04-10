@@ -62,7 +62,13 @@
                 <h2 class="text-lg section-title">Configuración</h2>
                 <input type="text" id="conf_personal" placeholder="Telefono personal (admin)">
                 <input type="text" id="conf_local" placeholder="Telefono negocio (WhatsApp)">
-                <button onclick="guardarConfig()" class="btn-main">Actualizar numeros</button>
+                <h3 class="text-sm font-bold uppercase mt-2" style="color:#bfefff">SEO / Redes</h3>
+                <input type="text" id="conf_seo_title" placeholder="Titulo SEO (Google y redes)">
+                <textarea id="conf_seo_desc" placeholder="Descripcion SEO" rows="3"></textarea>
+                <input type="text" id="conf_seo_keywords" placeholder="Palabras clave separadas por coma">
+                <input type="url" id="conf_seo_image" placeholder="URL imagen para compartir (OG)">
+                <input type="url" id="conf_seo_canonical" placeholder="URL canonica (ej. https://tu-dominio.com/)">
+                <button onclick="guardarConfig()" class="btn-main">Guardar configuración</button>
             </div>
             <div class="panel">
                 <h2 class="text-lg section-title mb-3">Estado WhatsApp</h2>
@@ -290,12 +296,26 @@
             const data = await res.json();
             document.getElementById('conf_personal').value = data.telefono_personal || '';
             document.getElementById('conf_local').value = data.telefono_local || '';
+            document.getElementById('conf_seo_title').value = data.seo_title || '';
+            document.getElementById('conf_seo_desc').value = data.seo_description || '';
+            document.getElementById('conf_seo_keywords').value = data.seo_keywords || '';
+            document.getElementById('conf_seo_image').value = data.seo_og_image || '';
+            document.getElementById('conf_seo_canonical').value = data.seo_canonical_url || '';
         }
 
         async function guardarConfig() {
             const personal = document.getElementById('conf_personal').value;
             const local = document.getElementById('conf_local').value;
-            const res = await fetch(`${API_URL}/actualizar-config`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ personal, local }) });
+            const seo_title = document.getElementById('conf_seo_title').value;
+            const seo_description = document.getElementById('conf_seo_desc').value;
+            const seo_keywords = document.getElementById('conf_seo_keywords').value;
+            const seo_og_image = document.getElementById('conf_seo_image').value;
+            const seo_canonical_url = document.getElementById('conf_seo_canonical').value;
+            const res = await fetch(`${API_URL}/actualizar-config`, {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ personal, local, seo_title, seo_description, seo_keywords, seo_og_image, seo_canonical_url })
+            });
             alert(res.ok ? 'Configuración guardada' : 'No se pudo guardar');
         }
 

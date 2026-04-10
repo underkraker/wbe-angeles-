@@ -210,12 +210,69 @@
         };
 
         window.onload = async () => {
+            await cargarSeoPublico();
             await cargarPaquetes();
             initComentariosForm();
             cargarComentarios();
             await cargarMediaVisual();
             await cargarPromocionesPublicas();
         };
+
+        function setMetaByName(name, content) {
+            if (!content) return;
+            const meta = document.querySelector(`meta[name="${name}"]`);
+            if (meta) meta.setAttribute('content', content);
+        }
+
+        function setMetaByProperty(property, content) {
+            if (!content) return;
+            const meta = document.querySelector(`meta[property="${property}"]`);
+            if (meta) meta.setAttribute('content', content);
+        }
+
+        function setCanonicalUrl(url) {
+            if (!url) return;
+            const link = document.querySelector('link[rel="canonical"]');
+            if (link) link.setAttribute('href', url);
+        }
+
+        async function cargarSeoPublico() {
+            try {
+                const res = await fetch(`${API_URL}/obtener-config`);
+                if (!res.ok) return;
+                const conf = await res.json();
+
+                const seoTitle = String(conf.seo_title || '').trim();
+                const seoDescription = String(conf.seo_description || '').trim();
+                const seoKeywords = String(conf.seo_keywords || '').trim();
+                const seoOgImage = String(conf.seo_og_image || '').trim();
+                const seoCanonical = String(conf.seo_canonical_url || '').trim();
+
+                if (seoTitle) {
+                    document.title = seoTitle;
+                    setMetaByProperty('og:title', seoTitle);
+                    setMetaByName('twitter:title', seoTitle);
+                }
+                if (seoDescription) {
+                    setMetaByName('description', seoDescription);
+                    setMetaByProperty('og:description', seoDescription);
+                    setMetaByName('twitter:description', seoDescription);
+                }
+                if (seoKeywords) {
+                    setMetaByName('keywords', seoKeywords);
+                }
+                if (seoOgImage) {
+                    setMetaByProperty('og:image', seoOgImage);
+                    setMetaByName('twitter:image', seoOgImage);
+                }
+                if (seoCanonical) {
+                    setCanonicalUrl(seoCanonical);
+                    setMetaByProperty('og:url', seoCanonical);
+                }
+            } catch (_err) {
+                // noop
+            }
+        }
 
         function escapeHtml(v) {
             return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
